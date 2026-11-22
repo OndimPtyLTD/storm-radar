@@ -1,30 +1,40 @@
-"""Ping your phone (via ntfy) when a strong or severe thunderstorm is due within 2 hours.
+"""Thunderwatch South Africa storm alerts.
 
-Runs on a schedule in GitHub Actions. Uses the same risk model as the Thunderwatch app:
-Open-Meteo instability, rain chance and thunder codes on a 7x7 grid around your spot,
-with storm drift from the 850/700/500 hPa winds.
+Every run checks one national forecast grid (1 degree, about 110 km) covering South Africa
+and pings, through ntfy, anyone subscribed to a town whose forecast thunderstorm risk is
+"Very high" or worse within the next 2 hours, or where hail is forecast.
+
+- Public town topics: thunderwatch-za-<town slug> (listed in towns.json); anyone can subscribe.
+- The owner's private topic (NTFY_TOPIC secret) gets the alerts for OWNER_TOWN.
+
+Risk categories are estimates from forecast instability, rain chance and model thunder codes.
+They are not calibrated probabilities and not observed storms; messages say so.
 """
 import json, math, os, sys, time, urllib.request, urllib.parse
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
-LAT = float(os.getenv("LAT", "-29.87"))
-LON = float(os.getenv("LON", "30.89"))
-NAME = os.getenv("PLACE", "Queensburgh")
 TOPIC = os.getenv("NTFY_TOPIC", "")
-APP_URL = os.getenv("APP_URL", "")
+OWNER_TOWN = os.getenv("OWNER_TOWN", "durban")
+APP_URL = os.getenv("APP_URL", "https://ondimptyltd.github.io/storm-radar/")
 TEST = os.getenv("TEST", "false").lower() == "true"
-STATE = "state/last_alert.json"
+PUBLIC_PREFIX = "thunderwatch-za-"
+STATE = "state/alerts.json"
 
 THRESHOLD = 0.70        # "Very high" and above (estimated category, not a probability)
 WINDOW_H = 2.0          # look-ahead
-COOLDOWN_H = 3.0        # no repeat pings for the same level within this
-N, STEP = 7, 0.45
+COOLDOWN_H = 3.0        # no repeat pings for the same town and level within this
+OVER_KM = 80            # grid cells this close count as "over the town"
+REACH_KM = 260          # how far away an approaching high-risk area is considered
+STEP, RADIUS_KM = 1.0, 180
 LEVELS = [(0.85, "Extreme"), (0.70, "Very high"), (0.50, "High"), (0.30, "Moderate"), (0.15, "Low")]
 DIRS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+SAFETY = "If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings."
+
+TOWNS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "towns.json")))
 
 
 def level(r):
-    return next((n for m, n in LEVELS if r >= m), "None")
+    return next((n for m, n in LEVELS if r >= m), "Minimal")
 
 
 def risk(code, cape, li, pp):
@@ -41,20 +51,7 @@ def risk(code, cape, li, pp):
     return min(max(code_s, showery, env), 1)
 
 
-def motion(H, i):
-    u = v = n = 0
-    for p in ("850", "700", "500"):
-        s, d = H.get(f"wind_speed_{p}hPa", [None])[i], H.get(f"wind_direction_{p}hPa", [None])[i]
-        if s is None or d is None:
-            continue
-        r = math.radians(d); u += -s * math.sin(r); v += -s * math.cos(r); n += 1
-    if not n:
-        return 0.0, 0.0
-    u /= n; v /= n
-    return (math.degrees(math.atan2(u, v)) + 360) % 360, math.hypot(u, v)
-
-
-def haversine(a, b):
+def dist_km(a, b):
     r = math.radians
     s = math.sin(r(b[0] - a[0]) / 2) ** 2 + math.cos(r(a[0])) * math.cos(r(b[0])) * math.sin(r(b[1] - a[1]) / 2) ** 2
     return 12742 * math.asin(math.sqrt(s))
@@ -72,38 +69,48 @@ def ang(a, b):
     return 360 - d if d > 180 else d
 
 
-def fetch():
-    step_lon = STEP / math.cos(math.radians(LAT))
-    grid = [(round(LAT + (i - 3) * STEP, 3), round(LON + (j - 3) * step_lon, 3)) for i in range(N) for j in range(N)]
+def national_grid():
+    """1-degree points within RADIUS_KM of any listed town (keeps the grid on South Africa)."""
+    pts, lat = [], -22.0
+    while lat >= -35.0:
+        lon = 16.5
+        while lon <= 33.0:
+            if min(dist_km((lat, lon), (t["lat"], t["lon"])) for t in TOWNS) <= RADIUS_KM:
+                pts.append((round(lat, 2), round(lon, 2)))
+            lon += STEP
+        lat -= STEP
+    return pts
+
+
+def fetch(grid):
     q = {
         "latitude": ",".join(str(g[0]) for g in grid),
         "longitude": ",".join(str(g[1]) for g in grid),
         "hourly": "weather_code,cape,lifted_index,precipitation_probability,wind_gusts_10m,"
-                  "wind_speed_850hPa,wind_direction_850hPa,wind_speed_700hPa,wind_direction_700hPa,"
-                  "wind_speed_500hPa,wind_direction_500hPa",
-        "forecast_hours": 3, "timeformat": "unixtime", "timezone": "auto", "wind_speed_unit": "kmh",
+                  "wind_speed_850hPa,wind_direction_850hPa,wind_speed_500hPa,wind_direction_500hPa",
+        "forecast_hours": 3, "timeformat": "unixtime", "timezone": "Africa/Johannesburg", "wind_speed_unit": "kmh",
     }
     url = "https://api.open-meteo.com/v1/forecast?" + urllib.parse.urlencode(q)
     for attempt in range(3):
         try:
-            with urllib.request.urlopen(url, timeout=30) as r:
+            with urllib.request.urlopen(url, timeout=60) as r:
                 data = json.load(r)
-            return grid, (data if isinstance(data, list) else [data])
+            return data if isinstance(data, list) else [data]
         except Exception as e:
-            print(f"Fetch failed ({e}), retrying"); time.sleep(5 * (attempt + 1))
-    sys.exit("Open-Meteo unreachable")
+            print(f"Fetch failed ({e}), retrying")
+            time.sleep(10 * (attempt + 1))
+    sys.exit("Open-Meteo unreachable: no alerts could be checked this run")
 
 
-def assess(grid, data):
-    now = time.time(); here = (LAT, LON); mid = len(grid) // 2
-    off = data[0].get("utc_offset_seconds", 7200)
-    hhmm = lambda t: datetime.fromtimestamp(t + off, timezone.utc).strftime("%H:%M")
-    hits, missing = [], 0
+def cells(grid, data, now):
+    """Per grid point and forecast hour: estimated risk, hail flag, gust and storm drift."""
+    out, missing = [], 0
     for k, d in enumerate(data):
         H = d.get("hourly") or {}
         times = H.get("time") or []
         col = lambda key: H.get(key) or [None] * len(times)
         codes, capes, lis, pps, gusts = col("weather_code"), col("cape"), col("lifted_index"), col("precipitation_probability"), col("wind_gusts_10m")
+        s85, d85, s50, d50 = col("wind_speed_850hPa"), col("wind_direction_850hPa"), col("wind_speed_500hPa"), col("wind_direction_500hPa")
         for i, t in enumerate(times):
             if t > now + WINDOW_H * 3600:
                 continue
@@ -114,73 +121,100 @@ def assess(grid, data):
                 if not hail:
                     continue
                 r = 0.92
-            if r < THRESHOLD and not hail:
-                continue
-            gust = gusts[i] or 0
-            if k == mid:
-                hits.append({"eta": max(t, now), "r": r, "hail": hail, "gust": gust,
-                             "text": f"{level(r)} thunderstorm risk (forecast estimate) over {NAME} from about {hhmm(max(t, now))}"})
-                continue
-            b, spd = motion(H, i) if H.get("wind_speed_500hPa") else (0, 0)
-            if spd < 8 or ang(b, bearing(grid[k], here)) > 35:
-                continue
-            dist = haversine(grid[k], here)
-            eta = max(t, now) + dist / spd * 3600
-            if eta - now <= WINDOW_H * 3600:
-                frm = DIRS[round(bearing(here, grid[k]) / 22.5) % 16]
-                hits.append({"eta": eta, "r": r, "hail": hail, "gust": gust,
-                             "text": f"Forecast: {level(r).lower()} thunderstorm risk area {round(dist)} km {frm}, "
-                                     f"drifting your way at {round(spd)} km/h, could arrive around {hhmm(eta)} "
-                                     f"(model estimate, not a tracked storm)"})
+            u = v = n = 0
+            for s, dd in ((s85[i], d85[i]), (s50[i], d50[i])):
+                if s is None or dd is None:
+                    continue
+                rr = math.radians(dd); u += -s * math.sin(rr); v += -s * math.cos(rr); n += 1
+            drift = ((math.degrees(math.atan2(u / n, v / n)) + 360) % 360, math.hypot(u / n, v / n)) if n else (0, 0)
+            out.append({"pt": grid[k], "t": max(t, now), "r": r, "hail": hail, "gust": gusts[i] or 0, "drift": drift})
     if missing:
         print(f"Warning: {missing} grid-hour values had no instability data and were skipped (not treated as zero risk).")
-    hits.sort(key=lambda h: (h["eta"], -h["r"]))
+    return out
+
+
+def assess_town(town, cs, now, hhmm):
+    here = (town["lat"], town["lon"])
+    hits = []
+    for c in cs:
+        if c["r"] < THRESHOLD and not c["hail"]:
+            continue
+        d = dist_km(c["pt"], here)
+        if d <= OVER_KM:
+            hits.append({"eta": c["t"], "c": c,
+                         "text": f"{level(c['r'])} thunderstorm risk over {town['name']} from about {hhmm(c['t'])} (forecast estimate)"})
+            continue
+        b, spd = c["drift"]
+        if d > REACH_KM or spd < 8 or ang(b, bearing(c["pt"], here)) > 35:
+            continue
+        eta = c["t"] + d / spd * 3600
+        if eta - now <= WINDOW_H * 3600:
+            frm = DIRS[round(bearing(here, c["pt"]) / 22.5) % 16]
+            hits.append({"eta": eta, "c": c,
+                         "text": f"Forecast: {level(c['r']).lower()} thunderstorm risk area about {round(d)} km {frm} of {town['name']}, "
+                                 f"drifting your way at {round(spd)} km/h, could arrive around {hhmm(eta)} (model estimate, not a tracked storm)"})
+    hits.sort(key=lambda h: h["eta"])
     return hits
 
 
-def load_state():
+def ping(topic, title, body, click, priority="urgent"):
+    headers = {"Title": title, "Priority": priority, "Tags": "zap,warning", "Click": click}
+    req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=body.encode(), headers=headers, method="POST")
     try:
-        with open(STATE) as f:
-            return json.load(f)
-    except Exception:
-        return {}
+        urllib.request.urlopen(req, timeout=20).read()
+        print("Pinged", topic, "|", title)
+    except Exception as e:
+        print("Ping failed", topic, e)
 
 
-def ping(title, body, priority="urgent"):
-    if not TOPIC:
-        sys.exit("NTFY_TOPIC secret is not set")
-    headers = {"Title": title, "Priority": priority, "Tags": "zap,warning"}
-    if APP_URL:
-        headers["Click"] = APP_URL
-    req = urllib.request.Request(f"https://ntfy.sh/{TOPIC}", data=body.encode(), headers=headers, method="POST")
-    urllib.request.urlopen(req, timeout=20).read()
-    print("Pinged:", title, "|", body)
+def town_link(t):
+    return APP_URL + "?" + urllib.parse.urlencode({"lat": t["lat"], "lon": t["lon"], "name": t["name"]})
 
 
 def main():
+    owner = next((t for t in TOWNS if t["slug"] == OWNER_TOWN), None)
     if TEST:
-        ping("Thunderwatch test", f"Alerts for {NAME} are set up. You’ll get a ping like this when forecast thunderstorm risk is very high within 2 hours.", "default")
+        if not TOPIC:
+            sys.exit("NTFY_TOPIC secret is not set")
+        name = owner["name"] if owner else OWNER_TOWN
+        ping(TOPIC, "Thunderwatch test", f"Alerts for {name} are set up. You’ll get a ping like this when forecast thunderstorm risk is very high within 2 hours.", APP_URL, "default")
         return
-    grid, data = fetch()
-    hits = assess(grid, data)
-    if not hits:
-        print("No strong storms within 2 hours."); return
-    worst = max(hits, key=lambda h: h["r"])
-    lvl = level(worst["r"])
-    st = load_state()
+    now = time.time()
+    grid = national_grid()
+    data = fetch(grid)
+    off = data[0].get("utc_offset_seconds", 7200)
+    hhmm = lambda t: datetime.fromtimestamp(t + off, timezone.utc).strftime("%H:%M")
+    cs = cells(grid, data, now)
+    try:
+        state = json.load(open(STATE))
+    except Exception:
+        state = {}
     rank = {"Very high": 1, "Extreme": 2}
-    if st and time.time() - st.get("t", 0) < COOLDOWN_H * 3600 and rank.get(lvl, 0) <= rank.get(st.get("level"), 0):
-        print(f"Already alerted ({st.get('level')}) recently; skipping."); return
-    lines = [hits[0]["text"] + "."]
-    extras = []
-    if any(h["hail"] for h in hits): extras.append("hail possible")
-    g = max(h["gust"] for h in hits)
-    if g >= 60: extras.append(f"gusts to {round(g)} km/h")
-    if extras: lines.append(", ".join(extras).capitalize() + ".")
-    ping(f"{lvl} thunderstorm risk within 2 hours", " ".join(lines))
+    sent = 0
+    for town in TOWNS:
+        hits = assess_town(town, cs, now, hhmm)
+        if not hits:
+            continue
+        lvl = level(max(h["c"]["r"] for h in hits))
+        st = state.get(town["slug"], {})
+        if st and now - st.get("t", 0) < COOLDOWN_H * 3600 and rank.get(lvl, 0) <= rank.get(st.get("level"), 0):
+            print(f"{town['name']}: already alerted ({st.get('level')}) recently; skipping.")
+            continue
+        extras = []
+        if any(h["c"]["hail"] for h in hits): extras.append("hail possible")
+        g = max(h["c"]["gust"] for h in hits)
+        if g >= 60: extras.append(f"gusts to {round(g)} km/h")
+        body = hits[0]["text"] + "." + (" " + ", ".join(extras).capitalize() + "." if extras else "") + " " + SAFETY
+        title = f"{town['name']}: {lvl} thunderstorm risk within 2 hours"
+        ping(PUBLIC_PREFIX + town["slug"], title, body, town_link(town))
+        if TOPIC and owner and town["slug"] == owner["slug"]:
+            ping(TOPIC, title, body, town_link(town))
+        state[town["slug"]] = {"t": now, "level": lvl}
+        sent += 1
+    print(f"Checked {len(TOWNS)} towns on {len(grid)} grid points; {sent} alert(s) sent.")
     os.makedirs("state", exist_ok=True)
     with open(STATE, "w") as f:
-        json.dump({"t": time.time(), "level": lvl}, f)
+        json.dump(state, f)
 
 
 if __name__ == "__main__":
