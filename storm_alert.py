@@ -1,8 +1,9 @@
 """Thunderwatch South Africa storm alerts.
 
 Every run checks one national forecast grid (1 degree, about 110 km) covering South Africa
-and pings, through ntfy, anyone subscribed to a town whose forecast thunderstorm risk is
-"Very high" or worse within the next 2 hours, or where hail is forecast.
+and pings, through ntfy, anyone subscribed to a town whose forecast thunderstorm risk within
+the next 2 hours is "Extreme", or "Very high" with the model also forecasting thunder, or
+where hail is forecast. (Stricter than the app's colours, to limit false alarms.)
 
 - Public town topics: thunderwatch-za-<town slug> (listed in towns.json); anyone can subscribe.
 - The owner's private topic (NTFY_TOPIC secret) gets the alerts for OWNER_TOWN.
@@ -20,7 +21,7 @@ TEST = os.getenv("TEST", "false").lower() == "true"
 PUBLIC_PREFIX = "thunderwatch-za-"
 STATE = "state/alerts.json"
 
-THRESHOLD = 0.70        # "Very high" and above (estimated category, not a probability)
+THRESHOLD = 0.70        # "Very high" (needs a model thunder code too); 0.85+ "Extreme" alerts alone
 WINDOW_H = 2.0          # look-ahead
 COOLDOWN_H = 3.0        # no repeat pings for the same town and level within this
 OVER_KM = 80            # grid cells this close count as "over the town"
@@ -127,7 +128,8 @@ def cells(grid, data, now):
                     continue
                 rr = math.radians(dd); u += -s * math.sin(rr); v += -s * math.cos(rr); n += 1
             drift = ((math.degrees(math.atan2(u / n, v / n)) + 360) % 360, math.hypot(u / n, v / n)) if n else (0, 0)
-            out.append({"pt": grid[k], "t": max(t, now), "r": r, "hail": hail, "gust": gusts[i] or 0, "drift": drift})
+            out.append({"pt": grid[k], "t": max(t, now), "r": r, "hail": hail, "tcode": codes[i] in (95, 96, 99),
+                        "gust": gusts[i] or 0, "drift": drift})
     if missing:
         print(f"Warning: {missing} grid-hour values had no instability data and were skipped (not treated as zero risk).")
     return out
@@ -137,7 +139,7 @@ def assess_town(town, cs, now, hhmm):
     here = (town["lat"], town["lon"])
     hits = []
     for c in cs:
-        if c["r"] < THRESHOLD and not c["hail"]:
+        if not (c["hail"] or c["r"] >= 0.85 or (c["r"] >= THRESHOLD and c["tcode"])):
             continue
         d = dist_km(c["pt"], here)
         if d <= OVER_KM:

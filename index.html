@@ -164,6 +164,34 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 .natlist .lvl{white-space:nowrap;font-size:13px}
 .sheet select{font:600 15px/1.2 var(--cond);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;max-width:360px}
 .topic{font:500 14px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border-radius:8px;padding:8px 10px;display:inline-block;margin:6px 0}
+.grab{display:none}
+@media (max-width:899px){
+  .panel{display:flex;flex-direction:column;max-height:46vh;padding-top:2px;transition:max-height .25s ease}
+  .panel.open{max-height:86vh}
+  .panel > *{flex:none}
+  #verdict{display:contents}
+  .grab{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;min-height:36px;border:0;background:transparent;color:var(--muted);padding:4px 0 6px;cursor:pointer;font:600 12px/1.2 var(--cond);order:0}
+  .grab i{width:40px;height:5px;border-radius:3px;background:var(--line)}
+  .place{order:1}
+  .headline{order:2;font-size:24px;margin:4px 0 6px}
+  #modes{order:3}
+  #layers{order:4}
+  #srcrow{order:5}
+  .timeline{order:6}
+  #move,#approach,#peak{order:7}
+  #move{margin-top:10px}
+  #forecastBits,#nationalBits,#radarBits{order:8}
+  .panel > .foot{order:9}
+  .sitenav{order:10}
+  .sitenav a{padding:4px 0}
+  .seg button,.btn,.sheet .close{min-height:40px}
+  .toplinks{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .toplinks::-webkit-scrollbar{display:none}
+  .toplinks a,.toplinks .credit{flex:none;padding:5px 10px}
+  .search input,.sheet select{font-size:16px}
+  .leaflet-control-attribution{font-size:10px}
+}
+@media (max-width:899px) and (prefers-reduced-motion: reduce){.panel{transition:none}}
 [hidden]{display:none !important}
 
 .arrow{background:none;border:0}
@@ -196,6 +224,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 </header>
 
 <aside class="panel" aria-label="Storm summary">
+  <button class="grab" id="grab" type="button" aria-expanded="false"><i></i><span id="grabLabel">Show more</span></button>
   <div class="place"><h1 id="place">Queensburgh</h1><span><button class="savebtn" id="saveBtn" type="button">Save place</button><span id="updated"></span></span></div>
   <section id="verdict" aria-live="polite">
     <p class="headline" id="headline">Checking the sky…</p>
@@ -301,7 +330,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       <h3>Storm movement</h3>
       <p>Arrows show where storms would drift, based on the average wind between about 1.5 and 5.5 km up. Arrival times in the summary are model estimates, not tracked storms.</p>
       <h3>South Africa view and alerts</h3>
-      <p>The South Africa view checks about 150 points roughly 110 km apart across the country, and the free storm alerts use the same grid every 30 minutes for 33 towns in all nine provinces. Because the grid is coarse, alerts describe the area around a town, not a single street.</p>
+      <p>The South Africa view checks about 150 points roughly 110 km apart across the country, and the free storm alerts use the same grid every 30 minutes for 33 towns in all nine provinces. Because the grid is coarse, alerts describe the area around a town, not a single street. To limit false alarms, alerts go out only for Extreme risk, or Very high risk where a model also forecasts thunder.</p>
       <h3>Radar</h3>
       <p>The radar view shows observed rain from RainViewer for the last two hours. Coverage over South Africa has gaps, and an empty area on the radar is not proof of dry weather.</p>
       <h3>Limitations</h3>
@@ -341,7 +370,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     </section>
 
     <section data-page="alerts" hidden>
-      <p>Get a free phone notification when forecast thunderstorm risk near your town is Very high or Extreme within the next 2 hours, or when hail is forecast. Alerts are forecast estimates, not observed storms, and they do not replace official warnings.</p>
+      <p>Get a free phone notification when forecast thunderstorm risk near your town is Extreme within the next 2 hours, or Very high with a forecast model also predicting thunder, or when hail is forecast. Alerts are forecast estimates, not observed storms, and they do not replace official warnings.</p>
       <h3>1. Choose your town</h3>
       <select id="townSel" aria-label="Town"></select>
       <p>Topic name: <span class="topic" id="topicName">…</span></p>
@@ -1022,11 +1051,11 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     hideRadar(); cellLayer.addTo(map); arrowLayer.addTo(map);
     sl.max = SLOTS - 1; sl.value = state.s;
     if (mode === 'forecast'){
-      if (prev === 'national') map.setView([state.center.lat, state.center.lon], 8);
+      if (prev === 'national') focusMap(state.center.lat, state.center.lon, 8);
       renderForecast();
       return;
     }
-    map.fitBounds(SA_BOUNDS);
+    map.fitBounds(SA_BOUNDS, isPhone() ? {paddingTopLeft:[0, 100], paddingBottomRight:[0, panelCover()]} : {});
     cellLayer.clearLayers(); arrowLayer.clearLayers();
     $('natList').innerHTML = '<li>Loading the South Africa forecast…</li>';
     try{
@@ -1094,8 +1123,8 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     you.setLatLng([lat, lon]);
     try { history.replaceState(null, '', `${location.pathname}?${new URLSearchParams({lat:lat.toFixed(4), lon:lon.toFixed(4), name})}${location.hash}`); } catch(e){}
     updateSaveBtn();
-    if (state.mode !== 'forecast'){ state.mode = 'forecast'; map.setView([lat, lon], 8); }
-    else map.setView([lat, lon], Math.max(map.getZoom(), 7));
+    if (state.mode !== 'forecast'){ state.mode = 'forecast'; focusMap(lat, lon, 8); }
+    else focusMap(lat, lon, Math.max(map.getZoom(), 7));
     loadForecast();
   }
   // "-29.87, 30.89" or "-29.87 30.89" typed into search
@@ -1234,8 +1263,26 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   });
   route();
 
+  // ---------- phone layout ----------
+  const isPhone = () => matchMedia('(max-width:899px)').matches;
+  const panelEl = document.querySelector('.panel');
+  function setPanel(open){
+    panelEl.classList.toggle('open', open);
+    $('grab').setAttribute('aria-expanded', String(open));
+    $('grabLabel').textContent = open ? 'Show less' : 'Show more';
+  }
+  $('grab').onclick = () => setPanel(!panelEl.classList.contains('open'));
+  map.on('click', () => { if (isPhone()) setPanel(false); });
+  // on phones, keep the chosen place visible above the bottom panel
+  const panelCover = () => Math.min(panelEl.offsetHeight, innerHeight * .46);
+  function focusMap(lat, lon, zoom){
+    map.setView([lat, lon], zoom, {animate:false});
+    if (isPhone()) map.panBy([0, Math.round((panelCover() - 100) / 2)], {animate:false});
+  }
+
   $('place').textContent = state.center.name;
   renderSaved(); updateSaveBtn();
+  focusMap(state.center.lat, state.center.lon, 8);
   loadForecast();
 })();
 </script>
