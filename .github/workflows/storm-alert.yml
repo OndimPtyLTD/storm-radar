@@ -37,5 +37,5 @@ jobs:
         run: |
           git config user.name "storm-alert-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add state/ || true
+          git add state/ alerts/ || true
           git diff --cached --quiet || (git commit -m "Storm alert sent" && git push)
