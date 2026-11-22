@@ -795,10 +795,11 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     if (q.trim().length < 2){ $('results').hidden = true; lastResults = []; active = -1; return; }
     if (!lastResults.length){ $('results').innerHTML = note('Searching…'); $('results').hidden = false; }
     try{
-      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=10&language=en`);
-      const j = await r.json();
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=10&language=en`;
+      const [za, world] = await Promise.all([fetch(url + '&countryCode=ZA').then(r => r.json()).catch(() => ({})), fetch(url).then(r => r.json())]);
       if (id !== reqId) return;   // a newer keystroke has taken over
-      lastResults = (j.results || []).sort((a,b) => (b.country_code === 'ZA') - (a.country_code === 'ZA')).slice(0, 8);
+      const seen = new Set();   // South African places first, then the rest of the world
+      lastResults = [...(za.results || []).slice(0, 5), ...(world.results || [])].filter(p => !seen.has(p.id) && seen.add(p.id)).slice(0, 8);
       active = lastResults.length ? 0 : -1;
       showResults();
     } catch(e){
