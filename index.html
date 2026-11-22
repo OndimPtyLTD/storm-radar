@@ -151,6 +151,47 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 #qr{background:#fff;padding:10px;border-radius:8px;display:inline-block;margin-top:10px;min-height:20px}
 #qr img,#qr canvas{display:block}
 .warnnote{font-size:13px;color:var(--muted)}
+.saved{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.saved:empty{display:none}
+.saved span{display:inline-flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:999px;box-shadow:0 2px 8px rgba(10,20,35,.15);font:600 12px/1.4 var(--cond)}
+.saved button{border:0;background:transparent;color:var(--ink);cursor:pointer;padding:3px 4px 3px 10px;font:inherit}
+.saved button.x{padding:3px 9px 3px 4px;color:var(--muted)}
+.savebtn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:2px 10px;font:600 12px/1.4 var(--cond);cursor:pointer;margin-right:6px}
+.natlist{list-style:none;margin:4px 0 0;padding:0}
+.natlist li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.natlist button{border:0;background:transparent;color:var(--ink);padding:0;cursor:pointer;font:600 15px/1.3 var(--cond);text-decoration:underline;text-underline-offset:2px;text-align:left}
+.natlist small{color:var(--muted);font-size:12px}
+.natlist .lvl{white-space:nowrap;font-size:13px}
+.sheet select{font:600 15px/1.2 var(--cond);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;max-width:360px}
+.topic{font:500 14px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border-radius:8px;padding:8px 10px;display:inline-block;margin:6px 0}
+.grab{display:none}
+@media (max-width:899px){
+  .panel{display:flex;flex-direction:column;max-height:46vh;padding-top:2px;transition:max-height .25s ease}
+  .panel.open{max-height:86vh}
+  .panel > *{flex:none}
+  #verdict{display:contents}
+  .grab{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;min-height:36px;border:0;background:transparent;color:var(--muted);padding:4px 0 6px;cursor:pointer;font:600 12px/1.2 var(--cond);order:0}
+  .grab i{width:40px;height:5px;border-radius:3px;background:var(--line)}
+  .place{order:1}
+  .headline{order:2;font-size:24px;margin:4px 0 6px}
+  #modes{order:3}
+  #layers{order:4}
+  #srcrow{order:5}
+  .timeline{order:6}
+  #move,#approach,#peak{order:7}
+  #move{margin-top:10px}
+  #forecastBits,#nationalBits,#radarBits{order:8}
+  .panel > .foot{order:9}
+  .sitenav{order:10}
+  .sitenav a{padding:4px 0}
+  .seg button,.btn,.sheet .close{min-height:40px}
+  .toplinks{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .toplinks::-webkit-scrollbar{display:none}
+  .toplinks a,.toplinks .credit{flex:none;padding:5px 10px}
+  .search input,.sheet select{font-size:16px}
+  .leaflet-control-attribution{font-size:10px}
+}
+@media (max-width:899px) and (prefers-reduced-motion: reduce){.panel{transition:none}}
 [hidden]{display:none !important}
 
 .arrow{background:none;border:0}
@@ -177,12 +218,14 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
     </button>
   </form>
-  <div class="toplinks"><p class="credit">Developed by Mbasa Faku</p><a href="#support" class="supportlink">Support Thunderwatch</a></div>
+  <div class="toplinks"><p class="credit">Developed by Mbasa Faku</p><a href="#alerts">Get storm alerts</a><a href="#support" class="supportlink">Support Thunderwatch</a></div>
   <ul id="results" hidden></ul>
+  <div class="saved" id="saved"></div>
 </header>
 
 <aside class="panel" aria-label="Storm summary">
-  <div class="place"><h1 id="place">Queensburgh</h1><span id="updated"></span></div>
+  <button class="grab" id="grab" type="button" aria-expanded="false"><i></i><span id="grabLabel">Show more</span></button>
+  <div class="place"><h1 id="place">Queensburgh</h1><span><button class="savebtn" id="saveBtn" type="button">Save place</button><span id="updated"></span></span></div>
   <section id="verdict" aria-live="polite">
     <p class="headline" id="headline">Checking the sky…</p>
     <p class="line" id="move"></p>
@@ -190,9 +233,10 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     <p class="line muted" id="peak"></p>
   </section>
 
-  <div class="seg two" role="tablist" id="modes">
-    <button role="tab" data-mode="forecast" aria-selected="true">Forecast, next 24 hours</button>
-    <button role="tab" data-mode="radar" aria-selected="false">Radar, last 2 hours</button>
+  <div class="seg three" role="tablist" id="modes">
+    <button role="tab" data-mode="forecast" aria-selected="true">My area, 24 h</button>
+    <button role="tab" data-mode="national" aria-selected="false">South Africa</button>
+    <button role="tab" data-mode="radar" aria-selected="false">Radar, 2 h</button>
   </div>
   <div class="seg three" role="tablist" id="layers">
     <button role="tab" data-layer="thunder" aria-selected="true">Thunder</button>
@@ -251,6 +295,12 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       </div>
     </details>
   </div>
+  <div id="nationalBits" hidden>
+    <p class="striplabel">Towns with the highest estimated thunder risk in the next 24 hours</p>
+    <ol class="natlist" id="natList"></ol>
+    <div class="legend" id="natLegend"></div>
+    <p class="foot">The South Africa view uses a coarser grid (points about 110 km apart) than My area. Tap a town, or tap the map and choose “Check weather here”, for 30-minute detail. Radar coverage over South Africa is patchy; see the Radar view.</p>
+  </div>
   <div id="radarBits" hidden>
     <div class="radarkey"></div>
     <div class="radarkeylab"><span>Light rain</span><span>Heavy rain</span><span>Hail possible</span></div>
@@ -259,7 +309,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 
   <p class="foot">Thunder risk categories (Low to Extreme) are estimates from forecast instability, rain chance and model thunder codes. They are not calibrated probabilities or observed storms. Grey dashed cells mean no data, not no risk. Thunder arrows show where storms would drift; wind arrows show where surface wind is blowing. Sources: Open-Meteo (best match, ECMWF, GFS, ICON and UK Met Office models) and MET Norway (Yr). 30-minute values come from Open-Meteo’s 15-minute forecast, which outside Europe and North America is smoothed from hourly model runs. Radar by RainViewer. Not an official warning; follow your national weather service for alerts.</p>
   <nav class="sitenav" aria-label="About Thunderwatch">
-    <a href="#about">About</a><a href="#how">How it works</a><a href="#safety">Storm safety</a><a href="#sources">Data sources and disclaimer</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a><a href="#support" class="supportlink">Support Thunderwatch</a>
+    <a href="#alerts">Storm alerts</a><a href="#about">About</a><a href="#how">How it works</a><a href="#safety">Storm safety</a><a href="#sources">Data sources and disclaimer</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a><a href="#support" class="supportlink">Support Thunderwatch</a>
   </nav>
 </aside>
 
@@ -279,6 +329,8 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       <p>The risk categories (Low, Moderate, High, Very high, Extreme) are estimates built from forecast atmospheric instability (CAPE and lifted index), rain chance and the models’ own thunderstorm codes. They are not calibrated probabilities and they are not observed storms.</p>
       <h3>Storm movement</h3>
       <p>Arrows show where storms would drift, based on the average wind between about 1.5 and 5.5 km up. Arrival times in the summary are model estimates, not tracked storms.</p>
+      <h3>South Africa view and alerts</h3>
+      <p>The South Africa view checks about 150 points roughly 110 km apart across the country, and the free storm alerts use the same grid every 30 minutes for 33 towns in all nine provinces. Because the grid is coarse, alerts describe the area around a town, not a single street. To limit false alarms, alerts go out only for Extreme risk, or Very high risk where a model also forecasts thunder.</p>
       <h3>Radar</h3>
       <p>The radar view shows observed rain from RainViewer for the last two hours. Coverage over South Africa has gaps, and an empty area on the radar is not proof of dry weather.</p>
       <h3>Limitations</h3>
@@ -305,6 +357,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       <p>Thunderwatch has no accounts, sets no cookies and does not sell or share personal information.</p>
       <h3>Location</h3>
       <p>If you tap the location button, your browser asks permission first. Your approximate coordinates are then sent to the weather services listed under Data sources to fetch your forecast. Thunderwatch does not store them. Place names you type are sent to Open-Meteo’s place search.</p>
+      <p>Places you save are kept only in this browser on your device. Storm alert subscriptions live in the ntfy app; Thunderwatch never sees who subscribes.</p>
       <h3>Visitor statistics</h3>
       <p>Thunderwatch uses GoatCounter, a cookieless visitor counter, to see how many people use the site, roughly which country or province they visit from, and which features are used. It does not identify individuals.</p>
       <h3>Contact</h3>
@@ -314,6 +367,24 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     <section data-page="contact" hidden>
       <p>Email <a href="mailto:ondimptyltd@gmail.com?subject=Thunderwatch">ondimptyltd@gmail.com</a> with questions, corrections or ideas.</p>
       <div class="btnrow"><button class="btn" data-copy="ondimptyltd@gmail.com" data-event="contact-email-copy">Copy email address</button></div>
+    </section>
+
+    <section data-page="alerts" hidden>
+      <p>Get a free phone notification when forecast thunderstorm risk near your town is Extreme within the next 2 hours, or Very high with a forecast model also predicting thunder, or when hail is forecast. Alerts are forecast estimates, not observed storms, and they do not replace official warnings.</p>
+      <h3>1. Choose your town</h3>
+      <select id="townSel" aria-label="Town"></select>
+      <p>Topic name: <span class="topic" id="topicName">…</span></p>
+      <h3>2. Subscribe in the free ntfy app</h3>
+      <ol>
+        <li>Install ntfy from the Play Store or App Store.</li>
+        <li>Tap +, enter the topic name above, keep the server as ntfy.sh, and tap Subscribe.</li>
+        <li>Allow notifications for ntfy. On Android, also set its battery use to Unrestricted.</li>
+      </ol>
+      <div class="btnrow">
+        <button class="btn" id="copyTopic" data-copy="" data-event="alerts-topic-copy">Copy topic name</button>
+        <a class="btn" id="openTopic" href="https://ntfy.sh/" target="_blank" rel="noopener" data-event="alerts-topic-open">Open in ntfy</a>
+      </div>
+      <p class="warnnote">Checks run about every 30 minutes and can be a few minutes late. Town topics are public: anyone can subscribe, and Thunderwatch cannot stop others posting to them, so trust only alerts titled with your town and “thunderstorm risk within 2 hours”. Thunderwatch collects no personal information; your subscription stays in the ntfy app.</p>
     </section>
 
     <section data-page="support" hidden>
@@ -392,6 +463,12 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     radar:{host:'', frames:[], layers:[], idx:0, loaded:false},
     timer:null
   };
+  // open a place from a shared or alert link: ?lat=..&lon=..&name=..
+  (() => {
+    const q = new URLSearchParams(location.search), lat = +q.get('lat'), lon = +q.get('lon');
+    if (q.has('lat') && q.has('lon') && isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180)
+      state.center = {lat, lon, name: (q.get('name') || `${lat.toFixed(2)}, ${lon.toFixed(2)}`).slice(0, 60)};
+  })();
 
   // ---------- map ----------
   const dark = matchMedia('(prefers-color-scheme: dark)');
@@ -409,7 +486,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     labels = L.tileLayer(esri('Reference'), {maxZoom:12, maxNativeZoom:16, zIndex:20}).addTo(map);
   }
   setBase();
-  dark.addEventListener('change', () => { setBase(); if (state.pts) renderForecast(); });
+  dark.addEventListener('change', () => { setBase(); if (state.mode !== 'radar') renderActive(); });
 
   const cellLayer = L.layerGroup().addTo(map);
   const arrowLayer = L.layerGroup().addTo(map);
@@ -774,14 +851,12 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       html:`<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="transform:rotate(${bearingDeg}deg)"><path d="M12 2L19 21l-7-4.5L5 21z" fill="${color}" fill-opacity="${opacity}"/></svg>`});
   }
 
-  function renderForecast(){
-    if (!state.pts) return;
-    const s = state.s, L_ = state.layer;
+  function drawCells(pts, s, dl, dn, mid){
+    const L_ = state.layer;
     cellLayer.clearLayers(); arrowLayer.clearLayers();
-    const dl = STEP/2, dn = state.stepLon/2;
     const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
     const muted = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
-    state.pts.forEach((p,k) => {
+    pts.forEach((p,k) => {
       const v = L_ === 'thunder' ? p.thunder[s] : L_ === 'rain' ? p.rain[s] : p.gust[s];
       const bounds = [[p.lat-dl, p.lon-dn],[p.lat+dl, p.lon+dn]];
       if (v == null){
@@ -794,7 +869,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       }
       if (L_ === 'thunder'){
         const m = p.motion[s];
-        if ((li >= 0 || k === MID) && m.speed >= 3){
+        if ((li >= 0 || k === mid) && m.speed >= 3){
           const sz = Math.round(16 + Math.min(m.speed, 60)/3);
           L.marker([p.lat, p.lon], {interactive:false, keyboard:false, icon:arrow(m.bearing, sz, li >= 2 ? ink : muted, li >= 2 ? .9 : .65)}).addTo(arrowLayer);
         }
@@ -806,6 +881,11 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
         }
       }
     });
+  }
+  function renderForecast(){
+    if (!state.pts) return;
+    const s = state.s;
+    drawCells(state.pts, s, STEP/2, state.stepLon/2, MID);
     const t = state.times[s];
     $('time').innerHTML = `${fmt(t)}<small>${s === 0 ? 'Now' : dayOf(t)}</small>`;
     [...$('strip').children].forEach((b,i) => b.setAttribute('aria-current', i === s));
@@ -898,40 +978,114 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   }, 5*60e3);
 
   // ---------- modes, layers, playback ----------
+  // ---------- South Africa view ----------
+  let TOWNS = [];
+  const townsReady = fetchJSON('towns.json', {timeout:10000}).then(t => { TOWNS = Array.isArray(t) ? t : []; }).catch(() => { TOWNS = []; });
+  const SA_BOUNDS = [[-35.2, 16.3], [-22.0, 33.0]];
+  const inSA = (lat, lon) => lat >= SA_BOUNDS[0][0] && lat <= SA_BOUNDS[1][0] && lon >= SA_BOUNDS[0][1] && lon <= SA_BOUNDS[1][1];
+  const HOURLY_NAT = ['weather_code','cape','lifted_index','precipitation_probability','precipitation','wind_speed_10m','wind_direction_10m','wind_gusts_10m',
+    'wind_speed_850hPa','wind_direction_850hPa','wind_speed_500hPa','wind_direction_500hPa'].join(',');
+  // 1-degree points within 180 km of a listed town, the same grid the alert service uses
+  function nationalGrid(){
+    const pts = [];
+    for (let lat = -22; lat >= -35; lat -= 1)
+      for (let lon = 16.5; lon <= 33; lon += 1)
+        if (TOWNS.some(t => haversine({lat, lon}, t) <= 180)) pts.push({lat, lon});
+    return pts;
+  }
+  async function loadNational(){
+    const N_ = state.nat;
+    if (N_ && Date.now()/1000 - N_.at < 1800) return N_;
+    await townsReady;
+    if (!TOWNS.length) throw new Error('towns');
+    const grid = nationalGrid();
+    const q = new URLSearchParams({latitude:grid.map(g=>g.lat).join(','), longitude:grid.map(g=>g.lon).join(','),
+      hourly:HOURLY_NAT, forecast_hours:'26', timeformat:'unixtime', timezone:'Africa/Johannesburg', wind_speed_unit:'kmh'});
+    let j = await fetchJSON('https://api.open-meteo.com/v1/forecast?' + q, {timeout:30000});
+    if (!Array.isArray(j)) j = [j];
+    const now = Date.now()/1000, start = Math.floor(now/1800)*1800;
+    const times = Array.from({length:SLOTS}, (_,k) => start + k*1800);
+    if (state.offset == null) state.offset = j[0].utc_offset_seconds;
+    state.nat = {at:now, times, pts:j.map((d,k) => ({lat:grid[k].lat, lon:grid[k].lon, ...buildSlots(d, times)}))};
+    return state.nat;
+  }
+  function renderNational(){
+    const N_ = state.nat; if (!N_) return;
+    const s = state.s, t = N_.times[s];
+    drawCells(N_.pts, s, .5, .5, -1);
+    $('time').innerHTML = `${fmt(t)}<small>${s === 0 ? 'Now' : dayOf(t)}</small>`;
+  }
+  function nationalSummary(){
+    const N_ = state.nat, rows = [];
+    TOWNS.forEach(t => {
+      const near = N_.pts.filter(p => haversine(p, t) <= 80);
+      let best = null;
+      near.forEach(p => p.thunder.forEach((v,i) => { if (v != null && v >= .3 && (!best || v > best.v)) best = {v, i}; }));
+      if (best) rows.push({t, ...best});
+    });
+    rows.sort((a,b) => b.v - a.v || a.i - b.i);
+    $('natList').innerHTML = rows.slice(0, 8).map((r,k) => `<li><span><button type="button" data-town="${TOWNS.indexOf(r.t)}">${esc(r.t.name)}</button> <small>${esc(r.t.province)}</small></span><span class="lvl"><i class="chip" style="background:${lvl('thunder', r.v).c}"></i> ${tName(r.v)} around ${when(N_.times[r.i])}</span></li>`).join('')
+      || '<li>No listed town shows moderate or higher estimated thunder risk in the next 24 hours.</li>';
+    $('natList').querySelectorAll('button[data-town]').forEach(b => b.onclick = () => { const t = TOWNS[+b.dataset.town]; moveTo(t.lat, t.lon, t.name); });
+    const L_ = state.layer, unit = {thunder:'', rain:' mm/h', wind:' km/h'}[L_];
+    $('natLegend').innerHTML = SCALES[L_].map(l => `<span><i style="background:${l.c}"></i>${l.name}${L_ === 'thunder' ? '' : ' ' + l.min + '+' + unit}</span>`).join('') + NODATA;
+  }
+
+  // ---------- modes, layers, playback ----------
   async function setMode(mode){
     stop();
+    const prev = state.mode;
     state.mode = mode;
     document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-selected', b.dataset.mode === mode));
     $('forecastBits').hidden = mode !== 'forecast';
-    $('layers').hidden = mode !== 'forecast';
+    $('nationalBits').hidden = mode !== 'national';
+    $('layers').hidden = mode === 'radar';
     $('srcrow').hidden = mode !== 'forecast';
     $('radarBits').hidden = mode !== 'radar';
+    ['move','approach','peak'].forEach(id => $(id).hidden = mode === 'national');   // those lines describe My area only
     const sl = $('slider');
-    if (mode === 'forecast'){
-      hideRadar(); cellLayer.addTo(map); arrowLayer.addTo(map);
-      sl.max = SLOTS - 1; sl.value = state.s;
-      renderForecast();
-    } else {
+    if (mode === 'radar'){
       cellLayer.remove(); arrowLayer.remove();
       if (await loadRadar()){ sl.max = state.radar.frames.length - 1; sl.value = state.radar.idx; renderRadar(); }
+      return;
+    }
+    hideRadar(); cellLayer.addTo(map); arrowLayer.addTo(map);
+    sl.max = SLOTS - 1; sl.value = state.s;
+    if (mode === 'forecast'){
+      if (prev === 'national') focusMap(state.center.lat, state.center.lon, 8);
+      renderForecast();
+      return;
+    }
+    map.fitBounds(SA_BOUNDS, isPhone() ? {paddingTopLeft:[0, 100], paddingBottomRight:[0, panelCover()]} : {});
+    cellLayer.clearLayers(); arrowLayer.clearLayers();
+    $('natList').innerHTML = '<li>Loading the South Africa forecast…</li>';
+    try{
+      await loadNational();
+      if (state.mode !== 'national') return;
+      nationalSummary(); renderNational();
+    } catch(e){
+      if (state.mode !== 'national') return;
+      $('natList').innerHTML = `<li>${e.message === 'rate' ? 'Open-Meteo’s free limit was reached. Wait a minute, then try again.' : 'The South Africa forecast couldn’t be loaded, so no storm information can be shown. This does not mean there are no storms. Try again shortly.'}</li>`;
     }
   }
+  const renderActive = () => state.mode === 'national' ? renderNational() : renderForecast();
   document.querySelectorAll('#modes button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
   document.querySelectorAll('#layers button').forEach(b => b.onclick = () => {
     state.layer = b.dataset.layer;
     document.querySelectorAll('#layers button').forEach(x => x.setAttribute('aria-selected', x === b));
-    if (state.pts){ buildStrip(); renderForecast(); }
+    if (state.mode === 'national' && state.nat){ nationalSummary(); renderNational(); }
+    else if (state.pts){ buildStrip(); renderForecast(); }
   });
 
   $('slider').oninput = e => {
     stop();
     const v = +e.target.value;
-    if (state.mode === 'forecast'){ state.s = v; renderForecast(); } else { state.radar.idx = v; renderRadar(); }
+    if (state.mode === 'radar'){ state.radar.idx = v; renderRadar(); } else { state.s = v; renderActive(); }
   };
   function step(){
     const sl = $('slider'), max = +sl.max;
-    if (state.mode === 'forecast'){ state.s = (state.s + 1) % (max + 1); sl.value = state.s; renderForecast(); }
-    else { state.radar.idx = (state.radar.idx + 1) % (max + 1); sl.value = state.radar.idx; renderRadar(); }
+    if (state.mode === 'radar'){ state.radar.idx = (state.radar.idx + 1) % (max + 1); sl.value = state.radar.idx; renderRadar(); }
+    else { state.s = (state.s + 1) % (max + 1); sl.value = state.s; renderActive(); }
   }
   function play(){
     state.timer = setInterval(step, state.mode === 'radar' ? 650 : 600);
@@ -946,12 +1100,43 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   $('play').onclick = () => state.timer ? stop() : play();
 
   // ---------- location ----------
+  // ---------- places: move, save, coordinates ----------
+  const SAVE_KEY = 'tw_saved';
+  const getSaved = () => { try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch(e){ return []; } };
+  const setSaved = list => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(list.slice(0, 8))); } catch(e){} };
+  const samePlace = (a,b) => Math.abs(a.lat - b.lat) < .01 && Math.abs(a.lon - b.lon) < .01;
+  function renderSaved(){
+    const list = getSaved();
+    $('saved').innerHTML = list.map((p,i) => `<span><button type="button" data-go="${i}">${esc(p.name)}</button><button type="button" class="x" data-del="${i}" aria-label="Remove ${esc(p.name)}">×</button></span>`).join('');
+    $('saved').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const p = getSaved()[+b.dataset.go]; if (p) moveTo(p.lat, p.lon, p.name); });
+    $('saved').querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const l = getSaved(); l.splice(+b.dataset.del, 1); setSaved(l); renderSaved(); updateSaveBtn(); });
+  }
+  function updateSaveBtn(){ $('saveBtn').textContent = getSaved().some(p => samePlace(p, state.center)) ? 'Saved ✓' : 'Save place'; }
+  $('saveBtn').onclick = () => {
+    let l = getSaved();
+    if (l.some(p => samePlace(p, state.center))) l = l.filter(p => !samePlace(p, state.center));
+    else { l.unshift({name:state.center.name, lat:state.center.lat, lon:state.center.lon}); track('place-save'); }
+    setSaved(l); renderSaved(); updateSaveBtn();
+  };
   function moveTo(lat, lon, name){
     state.center = {lat, lon, name};
     $('place').textContent = name;
     you.setLatLng([lat, lon]);
-    map.setView([lat, lon], Math.max(map.getZoom(), 7));
+    try { history.replaceState(null, '', `${location.pathname}?${new URLSearchParams({lat:lat.toFixed(4), lon:lon.toFixed(4), name})}${location.hash}`); } catch(e){}
+    updateSaveBtn();
+    if (state.mode !== 'forecast'){ state.mode = 'forecast'; focusMap(lat, lon, 8); }
+    else focusMap(lat, lon, Math.max(map.getZoom(), 7));
     loadForecast();
+  }
+  // "-29.87, 30.89" or "-29.87 30.89" typed into search
+  function coordResults(q){
+    const m = q.match(/^\s*(-?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/);
+    if (!m) return null;
+    const a = +m[1], b = +m[2], out = [];
+    const add = (lat, lon) => { if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) out.push({id:'c' + out.length, name:`${lat.toFixed(3)}, ${lon.toFixed(3)}`, admin1: inSA(lat, lon) ? 'Coordinates' : 'Coordinates outside South Africa', country:'', latitude:lat, longitude:lon}); };
+    add(a, b);
+    if (!inSA(a, b) && inSA(b, a)) add(b, a);
+    return out;
   }
   $('locate').onclick = () => {
     if (!navigator.geolocation){ $('move').textContent = 'This browser can’t share your location. Search for a place instead.'; return; }
@@ -980,6 +1165,8 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   async function search(q){
     const id = ++reqId;
     if (q.trim().length < 2){ $('results').hidden = true; lastResults = []; active = -1; return; }
+    const coords = coordResults(q);
+    if (coords){ lastResults = coords; active = coords.length ? 0 : -1; showResults(); return; }
     if (!lastResults.length){ $('results').innerHTML = note('Searching…'); $('results').hidden = false; }
     try{
       const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=10&language=en`;
@@ -1017,7 +1204,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 
   // ---------- info pages, donations, visitor events ----------
   const track = name => { try { window.goatcounter?.count?.({path:name, title:name, event:true}); } catch(e){} };
-  const PAGES = {about:'About Thunderwatch', how:'How it works', safety:'Storm safety', sources:'Data sources and disclaimer', privacy:'Privacy', contact:'Contact', support:'Help keep Thunderwatch running'};
+  const PAGES = {about:'About Thunderwatch', how:'How it works', safety:'Storm safety', sources:'Data sources and disclaimer', privacy:'Privacy', contact:'Contact', support:'Help keep Thunderwatch running', alerts:'Storm alerts for your town'};
   let qrLoaded = false;
   function loadQR(){
     if (qrLoaded) return; qrLoaded = true;
@@ -1035,7 +1222,30 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     $('sheet').hidden = false;
     $('sheetClose').focus();
     if (page === 'support') loadQR();
+    if (page === 'alerts') fillAlerts();
     track('page-' + page);
+  }
+  async function fillAlerts(){
+    await townsReady;
+    const sel = $('townSel');
+    if (!TOWNS.length){ $('topicName').textContent = 'Town list unavailable; try again shortly.'; return; }
+    if (!sel.options.length){
+      const byProv = {};
+      TOWNS.forEach((t,i) => (byProv[t.province] = byProv[t.province] || []).push(i));
+      sel.innerHTML = Object.keys(byProv).sort().map(p => `<optgroup label="${esc(p)}">${byProv[p].map(i => `<option value="${i}">${esc(TOWNS[i].name)}</option>`).join('')}</optgroup>`).join('');
+      let near = 0;
+      TOWNS.forEach((t,i) => { if (haversine(t, state.center) < haversine(TOWNS[near], state.center)) near = i; });
+      sel.value = String(near);
+      sel.onchange = showTopic;
+    }
+    showTopic();
+  }
+  function showTopic(){
+    const t = TOWNS[+$('townSel').value]; if (!t) return;
+    const topic = 'thunderwatch-za-' + t.slug;
+    $('topicName').textContent = topic;
+    $('copyTopic').dataset.copy = topic;
+    $('openTopic').href = 'https://ntfy.sh/' + topic;
   }
   const closeSheet = () => { history.replaceState(null, '', location.pathname + location.search); route(); };
   $('sheetClose').onclick = closeSheet;
@@ -1054,6 +1264,26 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   });
   route();
 
+  // ---------- phone layout ----------
+  const isPhone = () => matchMedia('(max-width:899px)').matches;
+  const panelEl = document.querySelector('.panel');
+  function setPanel(open){
+    panelEl.classList.toggle('open', open);
+    $('grab').setAttribute('aria-expanded', String(open));
+    $('grabLabel').textContent = open ? 'Show less' : 'Show more';
+  }
+  $('grab').onclick = () => setPanel(!panelEl.classList.contains('open'));
+  map.on('click', () => { if (isPhone()) setPanel(false); });
+  // on phones, keep the chosen place visible above the bottom panel
+  const panelCover = () => Math.min(panelEl.offsetHeight, innerHeight * .46);
+  function focusMap(lat, lon, zoom){
+    map.setView([lat, lon], zoom, {animate:false});
+    if (isPhone()) map.panBy([0, Math.round((panelCover() - 100) / 2)], {animate:false});
+  }
+
+  $('place').textContent = state.center.name;
+  renderSaved(); updateSaveBtn();
+  focusMap(state.center.lat, state.center.lon, 8);
   loadForecast();
 })();
 </script>
