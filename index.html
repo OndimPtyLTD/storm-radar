@@ -51,7 +51,7 @@ button,input{font:inherit;color:inherit}
   border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 14px);
   box-shadow:0 -8px 28px rgba(10,20,35,.18)}
 @media (min-width:900px){
-  .panel{top:calc(env(safe-area-inset-top,0px) + 70px);left:10px;right:auto;bottom:10px;width:400px;max-height:none;border:1px solid var(--line);border-radius:16px}
+  .panel{top:calc(env(safe-area-inset-top,0px) + 100px);left:10px;right:auto;bottom:10px;width:400px;max-height:none;border:1px solid var(--line);border-radius:16px}
   .top{max-width:400px}
 }
 .place{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
@@ -124,7 +124,8 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 .popbtn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;cursor:pointer}
 .leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 80%,transparent) !important;color:var(--muted) !important}
 .leaflet-control-attribution a{color:var(--muted) !important}
-.leaflet-top{top:calc(env(safe-area-inset-top,0px) + 62px)}
+.leaflet-top{top:calc(env(safe-area-inset-top,0px) + 92px)}
+.credit{display:inline-block;margin:6px 0 0;padding:3px 10px;font:600 12px/1.4 var(--cond);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;box-shadow:0 2px 8px rgba(10,20,35,.15)}
 @media (prefers-reduced-motion: reduce){.arrow svg{transition:none}}
 </style>
 </head>
@@ -138,6 +139,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
     </button>
   </form>
+  <p class="credit">Developed by Mbasa Faku</p>
   <ul id="results" hidden></ul>
 </header>
 
