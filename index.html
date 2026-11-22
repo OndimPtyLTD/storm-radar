@@ -164,34 +164,36 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 .natlist .lvl{white-space:nowrap;font-size:13px}
 .sheet select{font:600 15px/1.2 var(--cond);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;max-width:360px}
 .topic{font:500 14px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);border-radius:8px;padding:8px 10px;display:inline-block;margin:6px 0}
-.grab{display:none}
+.grab,.tabbar,.menubtn{display:none}
+.menulist{display:flex;flex-direction:column}
+.menulist a{padding:12px 2px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font:600 16px/1.3 var(--cond)}
+.menusaved{display:flex;flex-wrap:wrap;gap:8px}
 @media (max-width:899px){
-  .panel{display:flex;flex-direction:column;max-height:46vh;padding-top:2px;transition:max-height .25s ease}
-  .panel.open{max-height:86vh}
-  .panel > *{flex:none}
-  #verdict{display:contents}
-  .grab{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;min-height:36px;border:0;background:transparent;color:var(--muted);padding:4px 0 6px;cursor:pointer;font:600 12px/1.2 var(--cond);order:0}
-  .grab i{width:40px;height:5px;border-radius:3px;background:var(--line)}
-  .place{order:1}
-  .headline{order:2;font-size:24px;margin:4px 0 6px}
-  #modes{order:3}
-  #layers{order:4}
-  #srcrow{order:5}
-  .timeline{order:6}
-  #move,#approach,#peak{order:7}
-  #move{margin-top:10px}
-  #forecastBits,#nationalBits,#radarBits{order:8}
-  .panel > .foot{order:9}
-  .sitenav{order:10}
-  .sitenav a{padding:4px 0}
-  .seg button,.btn,.sheet .close{min-height:40px}
-  .toplinks{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-  .toplinks::-webkit-scrollbar{display:none}
-  .toplinks a,.toplinks .credit{flex:none;padding:5px 10px}
+  .top{left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 8px)}
+  .menubtn{display:grid}
   .search input,.sheet select{font-size:16px}
+  .toplinks{display:block;margin-top:4px}
+  .toplinks a,#saved,.sitenav{display:none !important}
+  .toplinks .credit{display:inline-block;margin:0;padding:2px 8px;font:600 11px/1.4 var(--cond);background:color-mix(in srgb,var(--surface) 85%,transparent);border:0;border-radius:6px;box-shadow:none}
+  .leaflet-top{top:calc(env(safe-area-inset-top,0px) + 84px)}
   .leaflet-control-attribution{font-size:10px}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;position:fixed;z-index:1001;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:4px 6px calc(env(safe-area-inset-bottom,0px) + 4px)}
+  .tabbar button,.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:600 12px/1.2 var(--cond);text-decoration:none;cursor:pointer}
+  .tabbar [aria-selected="true"]{color:var(--ink);background:var(--bg)}
+  .tabbar svg{width:22px;height:22px}
+  .panel{bottom:calc(env(safe-area-inset-bottom,0px) + 61px);max-height:calc(100vh - 150px);max-height:calc(100dvh - 150px);padding:0 14px 12px;border:0;box-shadow:0 -6px 20px rgba(10,20,35,.16)}
+  .grab{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;min-height:34px;border:0;background:transparent;color:var(--muted);padding:6px 0 4px;cursor:pointer;font:600 12px/1.2 var(--cond)}
+  .grab i{width:40px;height:5px;border-radius:3px;background:var(--line)}
+  #modes{display:none}
+  .place h1{font-size:14px}
+  .headline{font-size:21px;margin:2px 0 6px}
+  .headline svg{width:20px;height:24px}
+  .seg.three{margin-top:6px}
+  .seg button,.btn,.sheet .close{min-height:40px}
+  .timeline{margin-top:8px}
+  .panel:not(.open) #move,.panel:not(.open) #approach,.panel:not(.open) #peak,.panel:not(.open) #srcrow,
+  .panel:not(.open) #forecastBits,.panel:not(.open) #nationalBits,.panel:not(.open) > .foot{display:none !important}
 }
-@media (max-width:899px) and (prefers-reduced-motion: reduce){.panel{transition:none}}
 [hidden]{display:none !important}
 
 .arrow{background:none;border:0}
@@ -217,14 +219,22 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     <button class="iconbtn" type="button" id="locate" aria-label="Use my location" title="Use my location">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
     </button>
+    <button class="iconbtn menubtn" type="button" id="menuBtn" aria-label="Menu" title="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   </form>
   <div class="toplinks"><p class="credit">Developed by Mbasa Faku</p><a href="#alerts">Get storm alerts</a><a href="#support" class="supportlink">Support Thunderwatch</a></div>
   <ul id="results" hidden></ul>
   <div class="saved" id="saved"></div>
 </header>
 
+<nav class="tabbar" aria-label="Views">
+  <button type="button" data-mode="forecast" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>My area</button>
+  <button type="button" data-mode="national" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>South Africa</button>
+  <button type="button" data-mode="radar" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M12 3a9 9 0 1 0 9 9M12 7a5 5 0 1 0 5 5"/></svg>Radar</button>
+  <a href="#alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>Alerts</a>
+</nav>
+
 <aside class="panel" aria-label="Storm summary">
-  <button class="grab" id="grab" type="button" aria-expanded="false"><i></i><span id="grabLabel">Show more</span></button>
+  <button class="grab" id="grab" type="button" aria-expanded="false"><i></i><span id="grabLabel">Details</span></button>
   <div class="place"><h1 id="place">Queensburgh</h1><span><button class="savebtn" id="saveBtn" type="button">Save place</button><span id="updated"></span></span></div>
   <section id="verdict" aria-live="polite">
     <p class="headline" id="headline">Checking the sky…</p>
@@ -367,6 +377,22 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     <section data-page="contact" hidden>
       <p>Email <a href="mailto:ondimptyltd@gmail.com?subject=Thunderwatch">ondimptyltd@gmail.com</a> with questions, corrections or ideas.</p>
       <div class="btnrow"><button class="btn" data-copy="ondimptyltd@gmail.com" data-event="contact-email-copy">Copy email address</button></div>
+    </section>
+
+    <section data-page="menu" hidden>
+      <nav class="menulist" aria-label="Menu">
+        <a href="#alerts">Get storm alerts</a>
+        <a href="#about">About Thunderwatch</a>
+        <a href="#how">How it works</a>
+        <a href="#safety">Storm safety</a>
+        <a href="#sources">Data sources and disclaimer</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#contact">Contact</a>
+        <a href="#support" class="supportlink">Support Thunderwatch</a>
+      </nav>
+      <h3>Saved places</h3>
+      <div class="menusaved" id="menuSaved"></div>
+      <p class="warnnote">Developed by Mbasa Faku.</p>
     </section>
 
     <section data-page="alerts" hidden>
@@ -1036,7 +1062,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     stop();
     const prev = state.mode;
     state.mode = mode;
-    document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-selected', b.dataset.mode === mode));
+    document.querySelectorAll('#modes button, .tabbar [data-mode]').forEach(b => b.setAttribute('aria-selected', b.dataset.mode === mode));
     $('forecastBits').hidden = mode !== 'forecast';
     $('nationalBits').hidden = mode !== 'national';
     $('layers').hidden = mode === 'radar';
@@ -1056,7 +1082,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       renderForecast();
       return;
     }
-    map.fitBounds(SA_BOUNDS, isPhone() ? {paddingTopLeft:[0, 100], paddingBottomRight:[0, panelCover()]} : {});
+    map.fitBounds(SA_BOUNDS, isPhone() ? {paddingTopLeft:[0, topCover()], paddingBottomRight:[0, panelCover()]} : {});
     cellLayer.clearLayers(); arrowLayer.clearLayers();
     $('natList').innerHTML = '<li>Loading the South Africa forecast…</li>';
     try{
@@ -1069,7 +1095,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     }
   }
   const renderActive = () => state.mode === 'national' ? renderNational() : renderForecast();
-  document.querySelectorAll('#modes button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  document.querySelectorAll('#modes button, .tabbar [data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
   document.querySelectorAll('#layers button').forEach(b => b.onclick = () => {
     state.layer = b.dataset.layer;
     document.querySelectorAll('#layers button').forEach(x => x.setAttribute('aria-selected', x === b));
@@ -1204,7 +1230,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 
   // ---------- info pages, donations, visitor events ----------
   const track = name => { try { window.goatcounter?.count?.({path:name, title:name, event:true}); } catch(e){} };
-  const PAGES = {about:'About Thunderwatch', how:'How it works', safety:'Storm safety', sources:'Data sources and disclaimer', privacy:'Privacy', contact:'Contact', support:'Help keep Thunderwatch running', alerts:'Storm alerts for your town'};
+  const PAGES = {about:'About Thunderwatch', how:'How it works', safety:'Storm safety', sources:'Data sources and disclaimer', privacy:'Privacy', contact:'Contact', support:'Help keep Thunderwatch running', alerts:'Storm alerts for your town', menu:'Menu'};
   let qrLoaded = false;
   function loadQR(){
     if (qrLoaded) return; qrLoaded = true;
@@ -1223,6 +1249,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     $('sheetClose').focus();
     if (page === 'support') loadQR();
     if (page === 'alerts') fillAlerts();
+    if (page === 'menu') renderMenuSaved();
     track('page-' + page);
   }
   async function fillAlerts(){
@@ -1270,15 +1297,22 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   function setPanel(open){
     panelEl.classList.toggle('open', open);
     $('grab').setAttribute('aria-expanded', String(open));
-    $('grabLabel').textContent = open ? 'Show less' : 'Show more';
+    $('grabLabel').textContent = open ? 'Hide details' : 'Details';
   }
   $('grab').onclick = () => setPanel(!panelEl.classList.contains('open'));
   map.on('click', () => { if (isPhone()) setPanel(false); });
-  // on phones, keep the chosen place visible above the bottom panel
-  const panelCover = () => Math.min(panelEl.offsetHeight, innerHeight * .46);
+  // on phones, centre the chosen place in the strip of map between the search bar and the panel
+  const topCover = () => document.querySelector('.top').getBoundingClientRect().bottom + 6;
+  const panelCover = () => innerHeight - panelEl.getBoundingClientRect().top;
   function focusMap(lat, lon, zoom){
     map.setView([lat, lon], zoom, {animate:false});
-    if (isPhone()) map.panBy([0, Math.round((panelCover() - 100) / 2)], {animate:false});
+    if (isPhone()) map.panBy([0, Math.round((panelCover() - topCover()) / 2)], {animate:false});
+  }
+  $('menuBtn').onclick = () => { location.hash = 'menu'; };
+  function renderMenuSaved(){
+    const list = getSaved(), box = $('menuSaved');
+    box.innerHTML = list.length ? list.map((p,i) => `<button type="button" class="btn" data-go="${i}">${esc(p.name)}</button>`).join('') : '<p class="warnnote">No saved places yet. Tap “Save place” next to a place name.</p>';
+    box.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const p = getSaved()[+b.dataset.go]; closeSheet(); if (p) moveTo(p.lat, p.lon, p.name); });
   }
 
   $('place').textContent = state.center.name;
