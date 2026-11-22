@@ -194,6 +194,12 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   .panel:not(.open) #move,.panel:not(.open) #approach,.panel:not(.open) #peak,.panel:not(.open) #srcrow,
   .panel:not(.open) #forecastBits,.panel:not(.open) #nationalBits,.panel:not(.open) > .foot{display:none !important}
 }
+@media (max-width:899px){
+  .panel.nat .place,.panel.nat #headline{display:none}
+  .panel.nat:not(.open) #nationalBits{display:block !important}
+  .panel.nat:not(.open) #natList li:nth-child(n+4),.panel.nat:not(.open) #natLegend,.panel.nat:not(.open) #nationalBits .foot{display:none}
+  .panel.nat #nationalBits .striplabel{margin-top:0}
+}
 [hidden]{display:none !important}
 
 .arrow{background:none;border:0}
@@ -1062,6 +1068,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     stop();
     const prev = state.mode;
     state.mode = mode;
+    document.querySelector('.panel').classList.toggle('nat', mode === 'national');
     document.querySelectorAll('#modes button, .tabbar [data-mode]').forEach(b => b.setAttribute('aria-selected', b.dataset.mode === mode));
     $('forecastBits').hidden = mode !== 'forecast';
     $('nationalBits').hidden = mode !== 'national';
