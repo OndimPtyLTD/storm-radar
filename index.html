@@ -1322,7 +1322,15 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   let ACTIVE = null;   // null: loading; undefined: could not load
   async function loadActive(){
     try{
-      const j = await fetchJSON(`${ACTIVE_URL}?t=${Math.floor(Date.now()/300000)}`, {timeout:10000});
+      // GitHub's API returns the latest list within about a minute; the raw file can lag by 5 minutes, so it is only a fallback
+      let j;
+      try {
+        const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
+        const r = await fetch('https://api.github.com/repos/OndimPtyLTD/storm-radar/contents/alerts/active.json?ref=main', {headers:{Accept:'application/vnd.github.raw'}, signal:ctl.signal});
+        clearTimeout(timer);
+        if (!r.ok) throw new Error(String(r.status));
+        j = await r.json();
+      } catch(err){ j = await fetchJSON(`${ACTIVE_URL}?t=${Math.floor(Date.now()/300000)}`, {timeout:10000}); }
       const now = Date.now()/1000;
       ACTIVE = (j.alerts || []).filter(a => a.until > now);
     } catch(e){ if (ACTIVE == null) ACTIVE = undefined; }

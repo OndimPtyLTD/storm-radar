@@ -210,7 +210,7 @@ def main():
         if any(h["c"]["hail"] for h in hits): extras.append("hail possible")
         g = max(h["c"]["gust"] for h in hits)
         if g >= 60: extras.append(f"gusts to {round(g)} km/h")
-        body = hits[0]["text"] + "." + (" " + ", ".join(extras).capitalize() + "." if extras else "") + " " + SAFETY
+        body = max(hits, key=lambda h: h["c"]["r"])["text"] + "." + (" " + ", ".join(extras).capitalize() + "." if extras else "") + " " + SAFETY
         title = f"{town['name']}: {lvl} thunderstorm risk within 2 hours"
         entry = {"slug": town["slug"], "name": town["name"], "province": town["province"], "lat": town["lat"], "lon": town["lon"],
                  "level": lvl, "title": title, "body": body, "issued": round(now), "until": until}
