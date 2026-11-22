@@ -1,9 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-ZA">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Thunderwatch storm radar</title>
+<title>Thunderwatch South Africa: storm radar, thunderstorm risk and rain forecasts</title>
+<meta name="description" content="Free thunderstorm risk, rain and wind forecasts and rain radar for anywhere in South Africa, in 30-minute steps, with six forecast sources compared.">
+<link rel="canonical" href="https://ondimptyltd.github.io/storm-radar/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Thunderwatch South Africa">
+<meta property="og:description" content="Free thunderstorm risk, rain and wind forecasts and rain radar for anywhere in South Africa.">
+<meta property="og:url" content="https://ondimptyltd.github.io/storm-radar/">
+<meta property="og:locale" content="en_ZA">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#17202B">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Thunderwatch South Africa","url":"https://ondimptyltd.github.io/storm-radar/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"ZAR"},"areaServed":"ZA","author":{"@type":"Person","name":"Mbasa Faku"}}</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,7 +103,11 @@ button,input{font:inherit;color:inherit}
 .chip{width:10px;height:10px;border-radius:3px;display:inline-block;background:var(--line)}
 
 .striplabel{font-size:12px;color:var(--muted);margin:12px 0 4px}
-.strip{display:grid;grid-template-columns:repeat(48,1fr);gap:1px;height:46px;align-items:end}
+.stripwrap{overflow-x:auto;position:relative;overscroll-behavior-x:contain}
+.strip{display:grid;grid-template-columns:repeat(48,minmax(22px,1fr));gap:2px;height:46px;align-items:end;min-width:1150px}
+.strip button.nodata{height:100% !important;background:repeating-linear-gradient(45deg,var(--line) 0 3px,transparent 3px 6px) !important}
+.est{display:block;font:500 12px/1.3 var(--body);letter-spacing:0;color:var(--muted);margin-top:4px}
+.stripwrap .stripaxis{min-width:1150px}
 .strip button{border:0;padding:0;background:var(--line);border-radius:2px 2px 0 0;cursor:pointer;min-height:3px}
 .strip button[aria-current="true"]{outline:2px solid var(--ink);outline-offset:1px}
 .stripaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
@@ -201,8 +215,10 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       </div>
     </section>
     <p class="striplabel" id="stripLabel">Thunder risk at this spot, every 30 minutes</p>
-    <div class="strip" id="strip"></div>
-    <div class="stripaxis" id="stripaxis"></div>
+    <div class="stripwrap" id="stripwrap">
+      <div class="strip" id="strip"></div>
+      <div class="stripaxis" id="stripaxis"></div>
+    </div>
     <div class="legend" id="legend"></div>
     <details class="table" id="tableBox">
       <summary>Every 30 minutes at this spot</summary>
@@ -220,7 +236,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     <p class="foot" id="radarNote"></p>
   </div>
 
-  <p class="foot">Thunder risk is estimated from atmospheric instability, rain chance and forecast thunder. Thunder arrows show where storms would drift; wind arrows show where surface wind is blowing. Sources: Open-Meteo (best match, ECMWF, GFS, ICON and UK Met Office models) and MET Norway (Yr). 30-minute values come from Open-Meteo’s 15-minute forecast, which outside Europe and North America is smoothed from hourly model runs. Radar by RainViewer. Not an official warning; follow your national weather service for alerts.</p>
+  <p class="foot">Thunder risk categories (Low to Extreme) are estimates from forecast instability, rain chance and model thunder codes. They are not calibrated probabilities or observed storms. Grey dashed cells mean no data, not no risk. Thunder arrows show where storms would drift; wind arrows show where surface wind is blowing. Sources: Open-Meteo (best match, ECMWF, GFS, ICON and UK Met Office models) and MET Norway (Yr). 30-minute values come from Open-Meteo’s 15-minute forecast, which outside Europe and North America is smoothed from hourly model runs. Radar by RainViewer. Not an official warning; follow your national weather service for alerts.</p>
 </aside>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -230,10 +246,10 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   const SCALES = {
     thunder: [
       {min:.15, name:'Low',      c:'#7FC47F'},
-      {min:.30, name:'Possible', c:'#EFCB2B'},
-      {min:.50, name:'Likely',   c:'#F28C28'},
-      {min:.70, name:'Strong',   c:'#D7263D'},
-      {min:.85, name:'Severe',   c:'#B4239E'}
+      {min:.30, name:'Moderate', c:'#EFCB2B'},
+      {min:.50, name:'High',     c:'#F28C28'},
+      {min:.70, name:'Very high', c:'#D7263D'},
+      {min:.85, name:'Extreme',  c:'#B4239E'}
     ],
     rain: [            // mm per hour
       {min:.2, name:'Light',      c:'#9ED8F5'},
@@ -267,7 +283,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
 
   const state = {
     center:{lat:-29.87, lon:30.89, name:'Queensburgh'},
-    mode:'forecast', layer:'thunder', source:'best', grids:{}, compare:{}, pts:null, times:[], offset:null, s:0,
+    mode:'forecast', layer:'thunder', source:'best', grids:{}, compare:{}, pts:null, times:[], offset:null, s:0, loadId:0, updatedAt:null,
     radar:{host:'', frames:[], layers:[], idx:0, loaded:false},
     timer:null
   };
@@ -320,12 +336,17 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   const angDiff = (a,b) => { const d = Math.abs(a-b) % 360; return d > 180 ? 360-d : d; };
   const num = (v, d=0) => (v == null || isNaN(v)) ? null : +v.toFixed(d);
 
+  // Estimated thunderstorm potential, 0 to 1. A heuristic score, not a calibrated probability.
+  // Returns null when the instability data it needs is missing, so a data gap is never shown as "no risk".
   function riskOf(code, cape, li, pp){
-    cape = cape || 0; li = (li == null) ? 2 : li; pp = pp || 0;
-    const codeS = (code === 96 || code === 99) ? .92 : code === 95 ? .78 : (code >= 80 && code <= 82) ? .2 : 0;
-    const sc = clamp((cape-150)/2350, 0, 1), sl = clamp(-li/6, 0, 1), sp = pp/100;
+    const codeS = (code === 96 || code === 99) ? .92 : code === 95 ? .78 : 0;
+    if (cape == null) return codeS || null;
+    const sc = clamp((cape-150)/2350, 0, 1);
+    const sl = li == null ? sc : clamp(-li/6, 0, 1);
+    const sp = pp == null ? .5 : pp/100;
+    const showery = (code >= 80 && code <= 82) ? .2 : 0;
     const env = (.45*sc + .25*sl)*(.4 + .6*sp) + .3*sp*sc;
-    return clamp(Math.max(codeS, env), 0, 1);
+    return clamp(Math.max(codeS, showery, env), 0, 1);
   }
   const codeRisk = c => (c === 96 || c === 99) ? .92 : c === 95 ? .78 : 0;
   function motionOf(H, i){
@@ -340,39 +361,40 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     return {bearing:(Math.atan2(u,v)*180/Math.PI + 360) % 360, speed:Math.hypot(u,v)};
   }
 
-  // build 30-minute slots for one grid point
+  // build 30-minute slots for one grid point (null means "no data", never zero)
   function buildSlots(d, slotTimes){
     const H = d.hourly, M = d.minutely_15 || {time:[]};
     const hIdx = new Map(H.time.map((t,i) => [t,i]));
     const mIdx = new Map((M.time||[]).map((t,i) => [t,i]));
     const ppOf = i => H.precipitation_probability?.[i] ?? (H.precipitation?.[i] == null ? null : H.precipitation[i] >= 1 ? 85 : H.precipitation[i] >= .1 ? 60 : H.precipitation[i] > 0 ? 35 : 10);
-    const hRisk = H.time.map((_,i) => H.thunder_prob ? (H.thunder_prob[i] ?? 0) : riskOf(H.weather_code?.[i], H.cape?.[i], H.lifted_index?.[i], ppOf(i)));
+    const hRisk = H.time.map((_,i) => H.thunder_prob ? (H.thunder_prob[i] ?? null) : riskOf(H.weather_code?.[i], H.cape?.[i], H.lifted_index?.[i], ppOf(i)));
     const out = {thunder:[], rain:[], gust:[], wspd:[], wfrom:[], motion:[], hail:[]};
     slotTimes.forEach(t => {
-      const h0 = t - (t % 3600), i0 = hIdx.get(h0) ?? 0, i1 = hIdx.get(h0 + 3600) ?? i0;
+      const h0 = t - (t % 3600), i0 = hIdx.get(h0), i1 = hIdx.get(h0 + 3600) ?? i0;
       const f = (t - h0)/3600;
+      const at = (arr, i) => i == null ? null : (arr?.[i] ?? null);
       const lerp = (a,b) => (a == null ? b : b == null ? a : a + (b-a)*f);
       const m0 = mIdx.get(t), m1 = mIdx.get(t + 900);
       const mv = key => [m0, m1].map(k => k == null ? null : M[key]?.[k]).filter(x => x != null);
 
       // thunder
-      let r = lerp(hRisk[i0], hRisk[i1]);
+      let r = lerp(at(hRisk, i0), at(hRisk, i1));
       const codes = mv('weather_code');
-      codes.forEach(c => { r = Math.max(r, codeRisk(c)); });
-      out.thunder.push(clamp(r,0,1));
-      out.hail.push(codes.some(c => c === 96 || c === 99) || [H.weather_code?.[i0]].some(c => c === 96 || c === 99));
+      codes.forEach(c => { if (codeRisk(c)) r = Math.max(r ?? 0, codeRisk(c)); });
+      out.thunder.push(r == null ? null : clamp(r,0,1));
+      out.hail.push(codes.some(c => c === 96 || c === 99) || [at(H.weather_code, i0)].some(c => c === 96 || c === 99));
 
       // rain, mm per hour
       const mp = mv('precipitation');
-      out.rain.push(mp.length ? mp.reduce((a,b)=>a+b,0) * (4/mp.length) : (H.precipitation?.[i1] ?? 0));
+      out.rain.push(mp.length ? mp.reduce((a,b)=>a+b,0) * (4/mp.length) : at(H.precipitation, i1));
 
       // wind
       const mg = mv('wind_gusts_10m'), ms = mv('wind_speed_10m'), md = mv('wind_direction_10m');
-      out.gust.push(mg.length ? Math.max(...mg) : lerp(H.wind_gusts_10m?.[i0], H.wind_gusts_10m?.[i1]));
-      out.wspd.push(ms.length ? ms.reduce((a,b)=>a+b,0)/ms.length : lerp(H.wind_speed_10m?.[i0], H.wind_speed_10m?.[i1]));
-      out.wfrom.push(md.length ? md[0] : (H.wind_direction_10m?.[i0] ?? null));
+      out.gust.push(mg.length ? Math.max(...mg) : lerp(at(H.wind_gusts_10m, i0), at(H.wind_gusts_10m, i1)));
+      out.wspd.push(ms.length ? ms.reduce((a,b)=>a+b,0)/ms.length : lerp(at(H.wind_speed_10m, i0), at(H.wind_speed_10m, i1)));
+      out.wfrom.push(md.length ? md[0] : at(H.wind_direction_10m, i0));
 
-      out.motion.push(motionOf(H, i0));
+      out.motion.push(i0 == null ? {bearing:0, speed:0} : motionOf(H, i0));
     });
     return out;
   }
@@ -399,6 +421,23 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     for (const [k,v] of Object.entries(d.hourly)) H[k.endsWith('_' + model) ? k.slice(0, -model.length-1) : k] = v;
     return {...d, hourly:H};
   }
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // fetch with a timeout and one retry (with backoff) for timeouts, network errors and server errors
+  async function fetchJSON(url, {timeout = 15000, retries = 1} = {}){
+    for (let attempt = 0; ; attempt++){
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeout);
+      try{
+        const res = await fetch(url, {signal: ctl.signal});
+        if (res.status === 429) throw new Error('rate');
+        if (!res.ok) throw Object.assign(new Error(String(res.status)), {retry: res.status >= 500});
+        return await res.json();
+      } catch(e){
+        const retryable = e.name === 'AbortError' || e.name === 'TypeError' || e.retry === true;
+        if (!retryable || attempt >= retries) throw e.name === 'AbortError' ? new Error('timeout') : e;
+        await new Promise(r => setTimeout(r, 1500 * 2 ** attempt));
+      } finally { clearTimeout(timer); }
+    }
+  }
   async function openMeteo(points, src){
     const q = new URLSearchParams({
       latitude:points.map(g=>g.lat).join(','), longitude:points.map(g=>g.lon).join(','),
@@ -407,24 +446,20 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     });
     if (src.model) q.set('models', src.model);
     else { q.set('minutely_15', MINUTELY); q.set('forecast_minutely_15', '100'); }
-    const res = await fetch('https://api.open-meteo.com/v1/forecast?' + q);
-    if (res.status === 429) throw new Error('rate');
-    if (!res.ok) throw new Error(res.status);
-    let j = await res.json(); if (!Array.isArray(j)) j = [j];
+    let j = await fetchJSON('https://api.open-meteo.com/v1/forecast?' + q);
+    if (!Array.isArray(j)) j = [j];
     return j.map(d => normalise(d, src.model));
   }
   async function metNorway(c){
-    const res = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${c.lat.toFixed(4)}&lon=${c.lon.toFixed(4)}`);
-    if (!res.ok) throw new Error(res.status);
-    const j = await res.json();
+    const j = await fetchJSON(`https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${c.lat.toFixed(4)}&lon=${c.lon.toFixed(4)}`);
     const H = {time:[], thunder_prob:[], weather_code:[], precipitation:[], wind_speed_10m:[], wind_direction_10m:[], wind_gusts_10m:[]};
     j.properties.timeseries.slice(0, 30).forEach(ts => {
       const i = ts.data.instant.details, n1 = ts.data.next_1_hours;
       const sym = n1?.summary?.symbol_code || '';
       const pt = n1?.details?.probability_of_thunder;
       H.time.push(Date.parse(ts.time)/1000);
-      H.thunder_prob.push(pt != null ? pt/100 : sym.includes('thunder') ? .78 : 0);
-      H.weather_code.push(sym.includes('thunder') ? 95 : 0);
+      H.thunder_prob.push(pt != null ? pt/100 : n1 ? (sym.includes('thunder') ? .78 : 0) : null);
+      H.weather_code.push(sym.includes('thunder') ? 95 : null);
       H.precipitation.push(n1?.details?.precipitation_amount ?? null);
       H.wind_speed_10m.push(i.wind_speed != null ? i.wind_speed*3.6 : null);
       H.wind_direction_10m.push(i.wind_from_direction ?? null);
@@ -436,110 +471,137 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   }
   const has = (H, k) => Array.isArray(H?.[k]) && H[k].some(v => v != null);
 
-  async function loadForecast(){
-    $('headline').textContent = 'Checking the sky…';
-    ['move','approach','peak','agree'].forEach(id => $(id).textContent = '');
-    $('cmpBody').innerHTML = '';
-    state.grids = {}; state.compare = {}; state.s = 0;
+  async function loadForecast(auto){
+    const token = ++state.loadId;
+    if (!auto){
+      $('headline').textContent = 'Checking the sky…';
+      ['move','approach','peak','agree'].forEach(id => $(id).textContent = '');
+      $('cmpBody').innerHTML = '';
+    }
     const now = Date.now()/1000, start = Math.floor(now/1800)*1800;
-    state.times = Array.from({length:SLOTS}, (_,k) => start + k*1800);
+    const times = Array.from({length:SLOTS}, (_,k) => start + k*1800);
     const {grid, stepLon} = gridFor(state.center);
-    state.grid = grid; state.stepLon = stepLon;
-    loadCompare();   // runs alongside; fills the comparison table when ready
     try{
-      await loadGrid(state.source);
+      const src = SOURCES.find(s => s.id === state.source);
+      const data = await openMeteo(grid, src);
+      if (token !== state.loadId) return;   // a newer location or refresh has taken over
+      state.times = times; state.grid = grid; state.stepLon = stepLon;
+      state.grids = {}; state.compare = {}; state.s = 0;
+      state.offset = data[0].utc_offset_seconds;
+      state.grids[src.id] = makeGrid(data);
+      state.updatedAt = now;
+      showGrid(src.id);
       $('updated').textContent = `Updated ${fmt(Math.floor(now))}`;
+      loadCompare(token);
     } catch(e){
+      if (token !== state.loadId) return;
+      if (auto && state.pts){
+        $('updated').textContent = `Updated ${fmt(Math.floor(state.updatedAt))}; refresh failed, showing older data`;
+        return;
+      }
       $('headline').textContent = 'Forecast unavailable';
       const msg = e.message === 'rate'
         ? 'Open-Meteo’s free limit was reached. Wait a minute, then try again.'
-        : 'The forecast service didn’t respond. Check your connection, then try again.';
+        : 'The forecast service didn’t respond, so no storm information can be shown. This does not mean there are no storms. Check your connection, then try again.';
       $('move').innerHTML = `${msg} <br><button class="retry" id="retry">Try again</button>`;
-      $('retry').onclick = loadForecast;
+      $('retry').onclick = () => loadForecast();
     }
   }
-
-  async function loadGrid(id){
-    if (!state.grids[id]){
-      const src = SOURCES.find(s => s.id === id);
-      const data = await openMeteo(state.grid, src);
-      state.offset = data[0].utc_offset_seconds;
-      state.grids[id] = {
-        pts: data.map((d,k) => ({lat:state.grid[k].lat, lon:state.grid[k].lon, ...buildSlots(d, state.times)})),
-        noThunder: !has(data[MID].hourly, 'cape')
-      };
-    }
+  function makeGrid(data){
+    return {pts: data.map((d,k) => ({lat:state.grid[k].lat, lon:state.grid[k].lon, ...buildSlots(d, state.times)}))};
+  }
+  function showGrid(id){
     state.source = id;
     state.pts = state.grids[id].pts;
     $('source').value = id;
     summarise(); buildStrip(); buildTable(); setMode(state.mode);
-    if (state.grids[id].noThunder){
-      const nm = SOURCES.find(x => x.id === id).name;
-      $('headline').textContent = `${nm} has no thunder data here`;
-      $('move').textContent = `Rain and wind still come from ${nm}. Switch the map source back to Open-Meteo best match for thunder.`;
-      $('approach').textContent = '';
+  }
+  async function loadGrid(id){
+    const token = state.loadId;
+    if (!state.grids[id]){
+      const data = await openMeteo(state.grid, SOURCES.find(s => s.id === id));
+      if (token !== state.loadId) return;
+      state.grids[id] = makeGrid(data);
     }
+    showGrid(id);
   }
 
-  async function loadCompare(){
-    const c = state.center, key = `${c.lat},${c.lon}`;
+  async function loadCompare(token){
+    const c = state.center;
     await Promise.all(SOURCES.map(async src => {
       try{
         const d = src.id === 'met' ? await metNorway(c) : (await openMeteo([c], src))[0];
-        if (key !== `${state.center.lat},${state.center.lon}`) return;   // location changed meanwhile
+        if (token !== state.loadId) return;
         state.compare[src.id] = buildSlots(d, state.times);
-        state.compare[src.id].noThunder = !d.hourly.thunder_prob && !has(d.hourly, 'cape');
       } catch(e){
-        state.compare[src.id] = null;
+        if (token === state.loadId) state.compare[src.id] = null;
       }
     }));
-    if (state.pts && state.mode === 'forecast') renderCompare();
+    if (token === state.loadId && state.pts && state.mode === 'forecast') renderCompare();
   }
+
+  // refresh every 30 minutes while the page is open, and when it comes back into view if older than that
+  const refreshIfStale = () => { if (!document.hidden && state.updatedAt && Date.now()/1000 - state.updatedAt > 1800) loadForecast(true); };
+  setInterval(refreshIfStale, 60000);
+  document.addEventListener('visibilitychange', refreshIfStale);
 
   const bolt = () => `<svg width="26" height="30" viewBox="0 0 24 28" aria-hidden="true"><path d="M14 1L3 16h7l-2 11 13-16h-8z" fill="${getComputedStyle(document.documentElement).getPropertyValue('--bolt').trim()}"/></svg>`;
 
+  const when = t => dayOf(t) === 'Today' ? fmt(t) : `${fmt(t)} ${dayOf(t)}`;
+  const tName = v => lvl('thunder', v)?.name || 'Minimal';
+
   function summarise(){
     const here = state.pts[MID], T = state.times;
-    const idx = (min) => here.thunder.findIndex(r => r >= min);
-    const now = here.thunder[0], likely = idx(.5), possible = idx(.3);
+    const srcName = SOURCES.find(x => x.id === state.source).name;
+    const known = here.thunder.filter(v => v != null).length;
+    const argmax = a => a.reduce((bi,v,i,arr) => v != null && (arr[bi] == null || v > arr[bi]) ? i : bi, 0);
+    const rp = argmax(here.rain), gp = argmax(here.gust);
+    const parts = [];
+    if (here.rain[rp] == null) parts.push('No rain data');
+    else if (here.rain[rp] >= .2) parts.push(`Heaviest rain around ${when(T[rp])} (${num(here.rain[rp],1)} mm/h)`);
+    else parts.push('Little or no rain expected');
+    if (here.gust[gp] != null) parts.push(`strongest gusts around ${when(T[gp])} (${Math.round(here.gust[gp])} km/h)`);
+    if (known && known < here.thunder.length) parts.push('some hours have no thunder data');
+    $('peak').textContent = parts.join('; ') + '.';
+
+    if (!known){
+      $('headline').innerHTML = `<span>Thunder risk unavailable here<span class="est">${esc(srcName)} returned no instability data for this spot</span></span>`;
+      $('move').textContent = 'Without that data the thunder risk can’t be estimated, so don’t read this as “no storms”. Rain and wind below are unaffected. Try another map source.';
+      $('approach').textContent = '';
+      return;
+    }
+
+    const idx = (min) => here.thunder.findIndex(r => r != null && r >= min);
+    const now = here.thunder[0], high = idx(.5), mod = idx(.3);
     let head;
-    if (now >= .5) head = `${lvl('thunder', now).name === 'Likely' ? 'Thunderstorms likely' : lvl('thunder', now).name + ' storms'} right now`;
-    else if (likely > 0) head = `Storms likely from ${fmt(T[likely])}`;
-    else if (possible >= 0) head = possible === 0 ? 'Storms possible now' : `Storms possible from ${fmt(T[possible])}`;
-    else head = 'No storms expected in the next 24 hours';
-    const stormy = likely >= 0 || possible >= 0;
-    const first = likely >= 0 ? likely : possible;
-    if (stormy && first > 0 && dayOf(T[first]) !== 'Today') head += ` ${dayOf(T[first])}`;
-    $('headline').innerHTML = (stormy ? bolt() : '') + `<span>${head}</span>`;
+    if (now != null && now >= .5) head = `${tName(now)} thunderstorm risk now`;
+    else if (high > 0) head = `${tName(here.thunder[high])} thunderstorm risk from ${when(T[high])}`;
+    else if (mod >= 0) head = mod === 0 ? 'Moderate thunderstorm risk now' : `Moderate thunderstorm risk from ${when(T[mod])}`;
+    else head = 'Low thunderstorm risk for the next 24 hours';
+    const stormy = high >= 0 || mod >= 0;
+    const first = high >= 0 ? high : mod;
+    $('headline').innerHTML = (stormy ? bolt() : '') + `<span>${esc(head)}<span class="est">Estimated from forecast models, not observed</span></span>`;
 
     const m = here.motion[first >= 0 ? first : 0];
     $('move').textContent = m.speed < 5
-      ? 'Storms that form would barely move, so they could sit in one place and dump heavy rain.'
-      : `${stormy ? 'Storms would move' : 'Any showers would move'} toward the ${compass(m.bearing)} at about ${Math.round(m.speed)} km/h.`;
+      ? 'Steering winds are light, so any storms that form would barely move and could sit in one place.'
+      : `Steering winds would move ${stormy ? 'storms' : 'any showers'} toward the ${compass(m.bearing)} at about ${Math.round(m.speed)} km/h.`;
 
     let best = null;
     for (let s=0; s<24; s++){
       state.pts.forEach((p,k) => {
-        if (k === MID || p.thunder[s] < .5) return;
+        if (k === MID || p.thunder[s] == null || p.thunder[s] < .5) return;
         const mv = p.motion[s]; if (mv.speed < 8) return;
         if (angDiff(mv.bearing, bearing(p, state.center)) > 35) return;
         const dist = haversine(p, state.center);
         const eta = Math.max(T[s], Date.now()/1000) + dist/mv.speed*3600;
-        if (!best || eta < best.eta) best = {eta, dist, from:bearing(state.center, p), s, l:lvl('thunder', p.thunder[s])};
+        if (!best || eta < best.eta) best = {eta, dist, from:bearing(state.center, p), v:p.thunder[s]};
       });
     }
-    if (best && (likely < 0 || best.eta < T[likely] + 1800))
-      $('approach').textContent = `Watch the ${compass(best.from)}: a ${best.l.name.toLowerCase()} cell about ${Math.round(best.dist)} km away ${best.s === 0 ? 'is' : 'could be'} heading your way, arriving around ${fmt(best.eta)}.`;
-    else if (stormy) $('approach').textContent = 'No strong cells are lined up to drift straight over you; risk here comes from storms forming nearby.';
+    if (best && (high < 0 || best.eta < T[high] + 1800))
+      $('approach').textContent = `Model forecast: an area of ${tName(best.v).toLowerCase()} thunderstorm risk about ${Math.round(best.dist)} km to the ${compass(best.from)} could drift over you around ${when(best.eta)}. This is a forecast estimate, not a tracked storm.`;
+    else if (stormy) $('approach').textContent = 'The models don’t show a high-risk area drifting straight over you; the risk here comes from storms that may form nearby.';
     else $('approach').textContent = '';
-
-    const argmax = a => a.reduce((bi,v,i,arr) => (v ?? -1) > (arr[bi] ?? -1) ? i : bi, 0);
-    const rp = argmax(here.rain), gp = argmax(here.gust);
-    const parts = [];
-    if (here.rain[rp] >= .2) parts.push(`Heaviest rain around ${fmt(T[rp])} (${num(here.rain[rp],1)} mm/h)`);
-    else parts.push('Little or no rain expected');
-    if (here.gust[gp] != null) parts.push(`strongest gusts around ${fmt(T[gp])} (${Math.round(here.gust[gp])} km/h)`);
-    $('peak').textContent = parts.join('; ') + '.';
   }
 
   // ---------- per-slot text ----------
@@ -548,15 +610,16 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     const rain = p.rain[s], rl = lvl('rain', rain);
     const g = p.gust[s], ws = p.wspd[s], wf = p.wfrom[s], wl = lvl('wind', g ?? 0);
     return {
-      thunder: tl ? `${tl.name} (${Math.round(t*100)}%)${p.hail[s] ? ', hail possible' : ''}` : `Unlikely (${Math.round(t*100)}%)`,
-      thunderShort: tl ? tl.name + (p.hail[s] ? ', hail' : '') : '–',
-      rain: rain >= .05 ? `${num(rain,1)} mm/h${rl ? ', ' + rl.name.toLowerCase() : ', drizzle'}` : 'Dry',
-      rainShort: rain >= .05 ? `${num(rain,1)} mm/h` : 'Dry',
-      wind: ws == null ? 'No data' : `${Math.round(ws)} km/h from the ${wf == null ? '?' : compass(wf)}, gusts ${Math.round(g ?? ws)} km/h`,
-      windShort: ws == null ? '–' : `${Math.round(ws)} ${wf == null ? '' : SHORT[ci(wf)]}, gusts ${Math.round(g ?? ws)}`,
+      thunder: t == null ? 'No data' : `${tName(t)} (estimated)${p.hail[s] ? ', hail possible' : ''}`,
+      thunderShort: t == null ? 'No data' : tName(t) + (p.hail[s] ? ', hail' : ''),
+      rain: rain == null ? 'No data' : rain >= .05 ? `${num(rain,1)} mm/h${rl ? ', ' + rl.name.toLowerCase() : ', drizzle'}` : 'Dry',
+      rainShort: rain == null ? 'No data' : rain >= .05 ? `${num(rain,1)} mm/h` : 'Dry',
+      wind: ws == null ? 'No data' : `${Math.round(ws)} km/h from the ${wf == null ? '?' : compass(wf)}, gusts ${g == null ? '?' : Math.round(g)} km/h`,
+      windShort: ws == null ? 'No data' : `${Math.round(ws)} ${wf == null ? '' : SHORT[ci(wf)]}, gusts ${g == null ? '?' : Math.round(g)}`,
       tc: tl?.c, rc: rl?.c, wc: wl?.c
     };
   }
+  const NODATA = '<span><i style="background:repeating-linear-gradient(45deg,var(--line) 0 3px,transparent 3px 6px);outline:1px dashed var(--muted)"></i>No data</span>';
 
   function buildStrip(){
     const here = state.pts[MID], s = $('strip'), L_ = state.layer;
@@ -565,8 +628,9 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       let v, h, c;
       if (L_ === 'thunder'){ v = here.thunder[i]; h = v; c = lvl('thunder', v)?.c; }
       else if (L_ === 'rain'){ v = here.rain[i]; h = Math.sqrt(clamp(v/25,0,1)); c = lvl('rain', v)?.c; }
-      else { v = here.gust[i] ?? 0; h = clamp(v/110,0,1); c = lvl('wind', v)?.c; }
+      else { v = here.gust[i]; h = clamp(v/110,0,1); c = lvl('wind', v)?.c; }
       const b = document.createElement('button');
+      if (v == null) b.className = 'nodata';
       b.style.height = `${Math.max(7, h*100)}%`;
       if (c) b.style.background = c;
       const tx = slotText(here, i);
@@ -576,9 +640,9 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     }
     const T = state.times;
     $('stripaxis').innerHTML = [0,12,24,36,47].map(i => `<span>${fmt(T[i])}</span>`).join('');
-    $('stripLabel').textContent = {thunder:'Thunder risk', rain:'Rain', wind:'Wind gusts'}[L_] + ' at this spot, every 30 minutes';
+    $('stripLabel').textContent = {thunder:'Estimated thunder risk', rain:'Rain', wind:'Wind gusts'}[L_] + ' at this spot, every 30 minutes';
     const unit = {thunder:'', rain:' mm/h', wind:' km/h'}[L_];
-    $('legend').innerHTML = SCALES[L_].map(l => `<span><i style="background:${l.c}"></i>${l.name}${L_ === 'thunder' ? '' : ' ' + l.min + '+' + unit}</span>`).join('');
+    $('legend').innerHTML = SCALES[L_].map(l => `<span><i style="background:${l.c}"></i>${l.name}${L_ === 'thunder' ? '' : ' ' + l.min + '+' + unit}</span>`).join('') + NODATA;
   }
 
   function buildTable(){
@@ -612,13 +676,15 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
     const muted = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
     state.pts.forEach((p,k) => {
-      let li, color;
-      if (L_ === 'thunder'){ li = levelIn('thunder', p.thunder[s]); }
-      else if (L_ === 'rain'){ li = levelIn('rain', p.rain[s]); }
-      else { li = levelIn('wind', p.gust[s] ?? 0); }
+      const v = L_ === 'thunder' ? p.thunder[s] : L_ === 'rain' ? p.rain[s] : p.gust[s];
+      const bounds = [[p.lat-dl, p.lon-dn],[p.lat+dl, p.lon+dn]];
+      if (v == null){
+        L.rectangle(bounds, {color:muted, weight:1, dashArray:'4 4', fillColor:muted, fillOpacity:.08, interactive:false}).addTo(cellLayer);
+        return;
+      }
+      const li = levelIn(L_, v);
       if (li >= 0){
-        color = SCALES[L_][li].c;
-        L.rectangle([[p.lat-dl, p.lon-dn],[p.lat+dl, p.lon+dn]], {stroke:false, fillColor:color, fillOpacity:.24 + li*.06, interactive:false}).addTo(cellLayer);
+        L.rectangle(bounds, {stroke:false, fillColor:SCALES[L_][li].c, fillOpacity:.24 + li*.06, interactive:false}).addTo(cellLayer);
       }
       if (L_ === 'thunder'){
         const m = p.motion[s];
@@ -637,6 +703,8 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     const t = state.times[s];
     $('time').innerHTML = `${fmt(t)}<small>${s === 0 ? 'Now' : dayOf(t)}</small>`;
     [...$('strip').children].forEach((b,i) => b.setAttribute('aria-current', i === s));
+    const w = $('stripwrap'), bar = $('strip').children[s];
+    if (w && bar && (bar.offsetLeft < w.scrollLeft || bar.offsetLeft + bar.offsetWidth > w.scrollLeft + w.clientWidth)) w.scrollLeft = bar.offsetLeft - w.clientWidth/2;
     $('tbody').querySelectorAll('tr[data-i]').forEach(r => r.setAttribute('aria-current', +r.dataset.i === s));
 
     const here = state.pts[MID], x = slotText(here, s);
@@ -657,14 +725,14 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       if (c === undefined){ rows.push(`<tr${cls}><td>${src.name}</td><td class="na" colspan="3">Loading…</td></tr>`); return; }
       if (c === null){ rows.push(`<tr${cls}><td>${src.name}</td><td class="na" colspan="3">Not available</td></tr>`); return; }
       const t = c.thunder[s], tl = lvl('thunder', t), r = c.rain[s], g = c.gust[s];
-      const tTxt = c.noThunder ? '<span class="na">No data</span>' : `<i class="chip" style="background:${tl?.c || 'transparent'}"></i>${tl ? tl.name : 'Unlikely'}`;
-      if (!c.noThunder){ tN++; if (t >= .3) tYes++; }
+      const tTxt = t == null ? '<span class="na">No data</span>' : `<i class="chip" style="background:${tl?.c || 'transparent'}"></i>${tName(t)}`;
+      if (t != null){ tN++; if (t >= .3) tYes++; }
       if (r != null){ rN++; if (r >= .2) rYes++; }
-      rows.push(`<tr${cls}><td>${src.name}</td><td>${tTxt}</td><td>${r == null ? '–' : r >= .05 ? num(r,1) + ' mm/h' : 'Dry'}</td><td>${g == null ? '–' : Math.round(g) + ' km/h'}</td></tr>`);
+      rows.push(`<tr${cls}><td>${src.name}</td><td>${tTxt}</td><td>${r == null ? '<span class="na">No data</span>' : r >= .05 ? num(r,1) + ' mm/h' : 'Dry'}</td><td>${g == null ? '<span class="na">No data</span>' : Math.round(g) + ' km/h'}</td></tr>`);
     });
     $('cmpBody').innerHTML = rows.join('');
     const parts = [];
-    if (tN) parts.push(`${tYes} of ${tN} sources show thunder possible or worse`);
+    if (tN) parts.push(`${tYes} of ${tN} sources show moderate or higher thunder risk`);
     if (rN) parts.push(`${rYes} of ${rN} show rain`);
     const conf = tN ? (tYes === 0 || tYes === tN ? 'high' : tYes/tN >= .5 ? 'medium' : 'low') : null;
     $('agree').textContent = parts.length ? `${parts.join('; ')}.${conf && tYes ? ` Agreement on thunder: ${conf}.` : ''}` : '';
@@ -682,33 +750,46 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     $('source').disabled = false;
   };
 
-  // ---------- radar ----------
-  async function loadRadar(){
+  // ---------- radar (observed) ----------
+  async function loadRadar(force){
     const R = state.radar;
-    if (R.loaded) return true;
+    if (R.loaded && !force && Date.now() - R.fetchedAt < 5*60e3) return true;
     try{
-      const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-      const j = await res.json();
-      R.host = j.host;
-      R.frames = [...(j.radar?.past || []), ...((j.radar?.nowcast) || []).map(f => ({...f, nowcast:true}))];
-      if (!R.frames.length) throw new Error('no frames');
-      R.layers = R.frames.map(f => L.tileLayer(`${R.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`, {opacity:0, maxNativeZoom:7, maxZoom:12, zIndex:5, attribution:'Radar © RainViewer'}));
-      R.idx = R.frames.filter(f => !f.nowcast).length - 1;
-      R.loaded = true;
-      $('radarNote').textContent = 'Live rain radar where coverage exists. Some regions have gaps; the forecast view fills those in.';
+      const j = await fetchJSON('https://api.rainviewer.com/public/weather-maps.json', {timeout:10000});
+      const frames = [...(j.radar?.past || []), ...((j.radar?.nowcast) || []).map(f => ({...f, nowcast:true}))];
+      if (!frames.length) throw new Error('no frames');
+      hideRadar();
+      R.host = j.host; R.frames = frames;
+      R.layers = frames.map(f => L.tileLayer(`${R.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`, {opacity:0, maxNativeZoom:7, maxZoom:12, zIndex:5, attribution:'Radar © RainViewer'}));
+      R.idx = frames.filter(f => !f.nowcast).length - 1;
+      R.loaded = true; R.fetchedAt = Date.now(); R.note = '';
       return true;
     } catch(e){
-      $('radarNote').textContent = 'Radar service didn’t respond. Use the forecast view, or try again shortly.';
+      if (R.loaded){ R.note = 'Radar refresh failed; showing older frames.'; return true; }
+      $('radarNote').textContent = 'Radar service didn’t respond, so no radar can be shown. This does not mean there is no rain. Use the forecast view, or try again shortly.';
       return false;
     }
+  }
+  function radarAgeNote(){
+    const R = state.radar, last = R.frames.filter(f => !f.nowcast).pop();
+    const age = last ? Math.round((Date.now()/1000 - last.time)/60) : null;
+    $('radarNote').textContent = [
+      age == null ? '' : age > 30 ? `Latest radar frame is ${age} minutes old and may be out of date.` : `Latest radar frame is ${age} minutes old.`,
+      'Observed rain radar where coverage exists; some regions have gaps, and gaps are not the same as dry weather.', R.note || ''
+    ].filter(Boolean).join(' ');
   }
   function renderRadar(){
     const R = state.radar;
     R.layers.forEach((ly,i) => { if (!map.hasLayer(ly)) ly.addTo(map); ly.setOpacity(i === R.idx ? .78 : 0); });
     const f = R.frames[R.idx], lastPast = R.frames.filter(x=>!x.nowcast).length-1;
     if (f) $('time').innerHTML = `${fmt(f.time)}<small>${f.nowcast ? 'Projected' : (R.idx === lastPast ? 'Latest' : 'Past')}</small>`;
+    radarAgeNote();
   }
   function hideRadar(){ state.radar.layers.forEach(ly => map.hasLayer(ly) && map.removeLayer(ly)); }
+  setInterval(async () => {
+    if (state.mode !== 'radar' || document.hidden || state.timer) return;
+    if (await loadRadar(true) && state.mode === 'radar'){ $('slider').max = state.radar.frames.length - 1; $('slider').value = state.radar.idx; renderRadar(); }
+  }, 5*60e3);
 
   // ---------- modes, layers, playback ----------
   async function setMode(mode){
@@ -786,7 +867,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   const note = t => `<li class="note">${t}</li>`;
   function showResults(){
     const ul = $('results');
-    ul.innerHTML = lastResults.map((p,i) => `<li><button type="button" data-i="${i}" role="option" aria-selected="${i === active}">${p.name} <small>${[p.admin1, p.country].filter(Boolean).join(', ')}</small></button></li>`).join('') || note('No places match that name. Try a nearby town.');
+    ul.innerHTML = lastResults.map((p,i) => `<li><button type="button" data-i="${i}" role="option" aria-selected="${i === active}">${esc(p.name)} <small>${esc([p.admin1, p.country].filter(Boolean).join(', '))}</small></button></li>`).join('') || note('No places match that name. Try a nearby town.');
     ul.hidden = false;
     ul.querySelectorAll('button').forEach(b => b.onclick = () => pick(+b.dataset.i));
   }
