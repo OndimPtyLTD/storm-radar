@@ -15,11 +15,11 @@ APP_URL = os.getenv("APP_URL", "")
 TEST = os.getenv("TEST", "false").lower() == "true"
 STATE = "state/last_alert.json"
 
-THRESHOLD = 0.70        # Strong and above
+THRESHOLD = 0.70        # "Very high" and above (estimated category, not a probability)
 WINDOW_H = 2.0          # look-ahead
 COOLDOWN_H = 3.0        # no repeat pings for the same level within this
 N, STEP = 7, 0.45
-LEVELS = [(0.85, "Severe"), (0.70, "Strong"), (0.50, "Likely"), (0.30, "Possible"), (0.15, "Low")]
+LEVELS = [(0.85, "Extreme"), (0.70, "Very high"), (0.50, "High"), (0.30, "Moderate"), (0.15, "Low")]
 DIRS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
 
 
@@ -28,11 +28,17 @@ def level(r):
 
 
 def risk(code, cape, li, pp):
-    cape = cape or 0; li = 2 if li is None else li; pp = pp or 0
-    code_s = 0.92 if code in (96, 99) else 0.78 if code == 95 else 0.2 if code in (80, 81, 82) else 0
-    sc = min(max((cape - 150) / 2350, 0), 1); sl = min(max(-li / 6, 0), 1); sp = pp / 100
+    """Estimated thunderstorm potential 0..1 (heuristic, not a calibrated probability).
+    Returns None when CAPE is missing, so a data gap is never treated as zero risk."""
+    code_s = 0.92 if code in (96, 99) else 0.78 if code == 95 else 0
+    if cape is None:
+        return code_s or None
+    sc = min(max((cape - 150) / 2350, 0), 1)
+    sl = sc if li is None else min(max(-li / 6, 0), 1)
+    sp = 0.5 if pp is None else pp / 100
+    showery = 0.2 if code in (80, 81, 82) else 0
     env = (0.45 * sc + 0.25 * sl) * (0.4 + 0.6 * sp) + 0.3 * sp * sc
-    return min(max(code_s, env), 1)
+    return min(max(code_s, showery, env), 1)
 
 
 def motion(H, i):
@@ -92,22 +98,30 @@ def assess(grid, data):
     now = time.time(); here = (LAT, LON); mid = len(grid) // 2
     off = data[0].get("utc_offset_seconds", 7200)
     hhmm = lambda t: datetime.fromtimestamp(t + off, timezone.utc).strftime("%H:%M")
-    hits = []
+    hits, missing = [], 0
     for k, d in enumerate(data):
-        H = d["hourly"]
-        for i, t in enumerate(H["time"]):
+        H = d.get("hourly") or {}
+        times = H.get("time") or []
+        col = lambda key: H.get(key) or [None] * len(times)
+        codes, capes, lis, pps, gusts = col("weather_code"), col("cape"), col("lifted_index"), col("precipitation_probability"), col("wind_gusts_10m")
+        for i, t in enumerate(times):
             if t > now + WINDOW_H * 3600:
                 continue
-            r = risk(H["weather_code"][i], H["cape"][i], H["lifted_index"][i], H["precipitation_probability"][i])
-            hail = H["weather_code"][i] in (96, 99)
+            r = risk(codes[i], capes[i], lis[i], pps[i])
+            hail = codes[i] in (96, 99)
+            if r is None:
+                missing += 1
+                if not hail:
+                    continue
+                r = 0.92
             if r < THRESHOLD and not hail:
                 continue
-            gust = H["wind_gusts_10m"][i] or 0
+            gust = gusts[i] or 0
             if k == mid:
                 hits.append({"eta": max(t, now), "r": r, "hail": hail, "gust": gust,
-                             "text": f"{level(r)} storm risk over {NAME} from about {hhmm(max(t, now))}"})
+                             "text": f"{level(r)} thunderstorm risk (forecast estimate) over {NAME} from about {hhmm(max(t, now))}"})
                 continue
-            b, spd = motion(H, i)
+            b, spd = motion(H, i) if H.get("wind_speed_500hPa") else (0, 0)
             if spd < 8 or ang(b, bearing(grid[k], here)) > 35:
                 continue
             dist = haversine(grid[k], here)
@@ -115,8 +129,11 @@ def assess(grid, data):
             if eta - now <= WINDOW_H * 3600:
                 frm = DIRS[round(bearing(here, grid[k]) / 22.5) % 16]
                 hits.append({"eta": eta, "r": r, "hail": hail, "gust": gust,
-                             "text": f"{level(r)} cell {round(dist)} km {frm} moving your way at {round(spd)} km/h, "
-                                     f"arriving around {hhmm(eta)}"})
+                             "text": f"Forecast: {level(r).lower()} thunderstorm risk area {round(dist)} km {frm}, "
+                                     f"drifting your way at {round(spd)} km/h, could arrive around {hhmm(eta)} "
+                                     f"(model estimate, not a tracked storm)"})
+    if missing:
+        print(f"Warning: {missing} grid-hour values had no instability data and were skipped (not treated as zero risk).")
     hits.sort(key=lambda h: (h["eta"], -h["r"]))
     return hits
 
@@ -142,7 +159,7 @@ def ping(title, body, priority="urgent"):
 
 def main():
     if TEST:
-        ping("Thunderwatch test", f"Alerts for {NAME} are set up. You’ll get a ping like this when a strong storm is due within 2 hours.", "default")
+        ping("Thunderwatch test", f"Alerts for {NAME} are set up. You’ll get a ping like this when forecast thunderstorm risk is very high within 2 hours.", "default")
         return
     grid, data = fetch()
     hits = assess(grid, data)
@@ -151,7 +168,7 @@ def main():
     worst = max(hits, key=lambda h: h["r"])
     lvl = level(worst["r"])
     st = load_state()
-    rank = {"Strong": 1, "Severe": 2}
+    rank = {"Very high": 1, "Extreme": 2}
     if st and time.time() - st.get("t", 0) < COOLDOWN_H * 3600 and rank.get(lvl, 0) <= rank.get(st.get("level"), 0):
         print(f"Already alerted ({st.get('level')}) recently; skipping."); return
     lines = [hits[0]["text"] + "."]
@@ -160,7 +177,7 @@ def main():
     g = max(h["gust"] for h in hits)
     if g >= 60: extras.append(f"gusts to {round(g)} km/h")
     if extras: lines.append(", ".join(extras).capitalize() + ".")
-    ping(f"{lvl} storm within 2 hours", " ".join(lines))
+    ping(f"{lvl} thunderstorm risk within 2 hours", " ".join(lines))
     os.makedirs("state", exist_ok=True)
     with open(STATE, "w") as f:
         json.dump({"t": time.time(), "level": lvl}, f)
