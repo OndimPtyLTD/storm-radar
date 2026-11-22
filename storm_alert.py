@@ -20,6 +20,7 @@ APP_URL = os.getenv("APP_URL", "https://ondimptyltd.github.io/storm-radar/")
 TEST = os.getenv("TEST", "false").lower() == "true"
 PUBLIC_PREFIX = "thunderwatch-za-"
 STATE = "state/alerts.json"
+ACTIVE = "alerts/active.json"   # public list the website shows; only rewritten when it changes
 
 THRESHOLD = 0.70        # "Very high" (needs a model thunder code too); 0.85+ "Extreme" alerts alone
 WINDOW_H = 2.0          # look-ahead
@@ -191,6 +192,12 @@ def main():
         state = json.load(open(STATE))
     except Exception:
         state = {}
+    try:
+        active = {a["slug"]: a for a in json.load(open(ACTIVE)).get("alerts", [])}
+    except Exception:
+        active = {}
+    before = json.dumps(sorted(active.values(), key=lambda a: a["slug"]), sort_keys=True)
+    active = {k: v for k, v in active.items() if v.get("until", 0) > now}   # drop expired alerts
     rank = {"Very high": 1, "Extreme": 2}
     sent = 0
     for town in TOWNS:
@@ -198,17 +205,25 @@ def main():
         if not hits:
             continue
         lvl = level(max(h["c"]["r"] for h in hits))
-        st = state.get(town["slug"], {})
-        if st and now - st.get("t", 0) < COOLDOWN_H * 3600 and rank.get(lvl, 0) <= rank.get(st.get("level"), 0):
-            print(f"{town['name']}: already alerted ({st.get('level')}) recently; skipping.")
-            continue
+        until = round(max(h["eta"] for h in hits) + 3600)
         extras = []
         if any(h["c"]["hail"] for h in hits): extras.append("hail possible")
         g = max(h["c"]["gust"] for h in hits)
         if g >= 60: extras.append(f"gusts to {round(g)} km/h")
         body = hits[0]["text"] + "." + (" " + ", ".join(extras).capitalize() + "." if extras else "") + " " + SAFETY
         title = f"{town['name']}: {lvl} thunderstorm risk within 2 hours"
+        entry = {"slug": town["slug"], "name": town["name"], "province": town["province"], "lat": town["lat"], "lon": town["lon"],
+                 "level": lvl, "title": title, "body": body, "issued": round(now), "until": until}
+        st = state.get(town["slug"], {})
+        if st and now - st.get("t", 0) < COOLDOWN_H * 3600 and rank.get(lvl, 0) <= rank.get(st.get("level"), 0):
+            print(f"{town['name']}: already alerted ({st.get('level')}) recently; skipping.")
+            if town["slug"] in active:
+                active[town["slug"]]["until"] = max(active[town["slug"]]["until"], until)
+            else:
+                active[town["slug"]] = {**entry, "issued": round(st.get("t", now))}
+            continue
         ping(PUBLIC_PREFIX + town["slug"], title, body, town_link(town))
+        active[town["slug"]] = entry
         if TOPIC and owner and town["slug"] == owner["slug"]:
             ping(TOPIC, title, body, town_link(town))
         state[town["slug"]] = {"t": now, "level": lvl}
@@ -217,6 +232,11 @@ def main():
     os.makedirs("state", exist_ok=True)
     with open(STATE, "w") as f:
         json.dump(state, f)
+    if json.dumps(sorted(active.values(), key=lambda a: a["slug"]), sort_keys=True) != before:
+        os.makedirs("alerts", exist_ok=True)
+        with open(ACTIVE, "w") as f:
+            json.dump({"updated": round(now), "alerts": sorted(active.values(), key=lambda a: -a["issued"])}, f, indent=1)
+        print(f"Active alert list updated: {len(active)} active.")
 
 
 if __name__ == "__main__":

@@ -200,6 +200,14 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   .panel.nat:not(.open) #natList li:nth-child(n+3),.panel.nat:not(.open) #natLegend,.panel.nat:not(.open) #nationalBits .foot{display:none}
   .panel.nat #nationalBits .striplabel{margin-top:0}
 }
+.alertbar{display:block;margin:8px 0 2px;padding:9px 12px;border-radius:10px;background:#B4239E;color:#fff;text-decoration:none;font:500 14px/1.35 var(--body)}
+.alertbar b{display:block;font:700 15px/1.25 var(--cond)}
+.activealert{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.activealert .chip{margin-top:5px;flex:none}
+.activealert p{margin:2px 0}
+.activealert small{color:var(--muted)}
+.tabbar a{position:relative}
+.dot{position:absolute;top:8px;right:calc(50% - 16px);width:9px;height:9px;border-radius:50%;background:#D7263D;border:2px solid var(--surface)}
 [hidden]{display:none !important}
 
 .arrow{background:none;border:0}
@@ -236,12 +244,13 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   <button type="button" data-mode="forecast" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>My area</button>
   <button type="button" data-mode="national" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>South Africa</button>
   <button type="button" data-mode="radar" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M12 3a9 9 0 1 0 9 9M12 7a5 5 0 1 0 5 5"/></svg>Radar</button>
-  <a href="#alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>Alerts</a>
+  <a href="#alerts"><i class="dot" id="alertDot" hidden></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>Alerts</a>
 </nav>
 
 <aside class="panel" aria-label="Storm summary">
   <button class="grab" id="grab" type="button" aria-expanded="false"><i></i><span id="grabLabel">Details</span></button>
   <div class="place"><h1 id="place">Queensburgh</h1><span><button class="savebtn" id="saveBtn" type="button">Save place</button><span id="updated"></span></span></div>
+  <a class="alertbar" id="alertBar" href="#alerts" hidden></a>
   <section id="verdict" aria-live="polite">
     <p class="headline" id="headline">Checking the sky…</p>
     <p class="line" id="move"></p>
@@ -402,11 +411,13 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     </section>
 
     <section data-page="alerts" hidden>
+      <h3>Active storm alerts</h3>
+      <div id="activeAlerts"><p class="warnnote">Loading…</p></div>
       <p>Get a free phone notification when forecast thunderstorm risk near your town is Extreme within the next 2 hours, or Very high with a forecast model also predicting thunder, or when hail is forecast. Alerts are forecast estimates, not observed storms, and they do not replace official warnings.</p>
       <h3>1. Choose your town</h3>
       <select id="townSel" aria-label="Town"></select>
       <p>Topic name: <span class="topic" id="topicName">…</span></p>
-      <h3>2. Subscribe in the free ntfy app</h3>
+      <h3>2. Get alerts on your phone with the free ntfy app</h3>
       <ol>
         <li>Install ntfy from the Play Store or App Store.</li>
         <li>Tap +, enter the topic name above, keep the server as ntfy.sh, and tap Subscribe.</li>
@@ -416,6 +427,11 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
         <button class="btn" id="copyTopic" data-copy="" data-event="alerts-topic-copy">Copy topic name</button>
         <a class="btn" id="openTopic" href="https://ntfy.sh/" target="_blank" rel="noopener" data-event="alerts-topic-open">Open in ntfy</a>
       </div>
+      <h3>3. Or get alerts in this browser</h3>
+      <p>While Thunderwatch is open, even in a background tab, your browser can pop up a notification when an alert is issued for the town chosen above. No app needed.</p>
+      <div class="btnrow"><button class="btn" id="notifyBtn" type="button">Turn on browser alerts</button></div>
+      <p class="warnnote" id="notifyState"></p>
+      <p>To get browser alerts even when Thunderwatch is closed, tap “Open in ntfy” above, then tap Subscribe on the ntfy page and allow notifications. That works in Chrome, Edge and Firefox on Android and computers; on iPhone, use the ntfy app.</p>
       <p class="warnnote">Checks run about every 30 minutes and can be a few minutes late. Town topics are public: anyone can subscribe, and Thunderwatch cannot stop others posting to them, so trust only alerts titled with your town and “thunderstorm risk within 2 hours”. Thunderwatch collects no personal information; your subscription stays in the ntfy app.</p>
     </section>
 
@@ -1157,7 +1173,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     $('place').textContent = name;
     you.setLatLng([lat, lon]);
     try { history.replaceState(null, '', `${location.pathname}?${new URLSearchParams({lat:lat.toFixed(4), lon:lon.toFixed(4), name})}${location.hash}`); } catch(e){}
-    updateSaveBtn();
+    updateSaveBtn(); showActive();
     if (state.mode !== 'forecast'){ state.mode = 'forecast'; focusMap(lat, lon, 8); }
     else focusMap(lat, lon, Math.max(map.getZoom(), 7));
     loadForecast();
@@ -1256,7 +1272,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     $('sheet').hidden = false;
     $('sheetClose').focus();
     if (page === 'support') loadQR();
-    if (page === 'alerts') fillAlerts();
+    if (page === 'alerts'){ fillAlerts(); loadActive(); }
     if (page === 'menu') renderMenuSaved();
     track('page-' + page);
   }
@@ -1281,6 +1297,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     $('topicName').textContent = topic;
     $('copyTopic').dataset.copy = topic;
     $('openTopic').href = 'https://ntfy.sh/' + topic;
+    updateNotifyUI();
   }
   const closeSheet = () => { history.replaceState(null, '', location.pathname + location.search); route(); };
   $('sheetClose').onclick = closeSheet;
@@ -1298,6 +1315,65 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     setTimeout(() => c.textContent = old, 2000);
   });
   route();
+
+  // ---------- active alerts issued by the alert service ----------
+  const ACTIVE_URL = 'https://raw.githubusercontent.com/OndimPtyLTD/storm-radar/main/alerts/active.json';
+  const LCOL = {'Very high':'#D7263D', Extreme:'#B4239E'};
+  let ACTIVE = null;   // null: loading; undefined: could not load
+  async function loadActive(){
+    try{
+      const j = await fetchJSON(`${ACTIVE_URL}?t=${Math.floor(Date.now()/300000)}`, {timeout:10000});
+      const now = Date.now()/1000;
+      ACTIVE = (j.alerts || []).filter(a => a.until > now);
+    } catch(e){ if (ACTIVE == null) ACTIVE = undefined; }
+    showActive(); notifyNew();
+  }
+  const nearAlerts = () => (ACTIVE || []).filter(a => haversine(a, state.center) <= 120);
+  function showActive(){
+    const near = nearAlerts(), bar = $('alertBar');
+    if (near.length){
+      bar.innerHTML = `<b>Storm alert: ${esc(near[0].name)}</b>${esc(near[0].level)} thunderstorm risk within 2 hours (forecast). Tap for details.`;
+      bar.hidden = false;
+    } else bar.hidden = true;
+    $('alertDot').hidden = !near.length;
+    const box = $('activeAlerts');
+    if (ACTIVE === undefined){ box.innerHTML = '<p class="warnnote">The alert list couldn’t be loaded. This does not mean there are no storms; check the forecast and official warnings.</p>'; return; }
+    if (ACTIVE == null){ box.innerHTML = '<p class="warnnote">Loading…</p>'; return; }
+    box.innerHTML = ACTIVE.length
+      ? ACTIVE.map(a => `<div class="activealert"><i class="chip" style="background:${LCOL[a.level] || '#D7263D'}"></i><div><b>${esc(a.title)}</b><p>${esc(a.body)}</p><small>Issued ${fmt(a.issued)}${dayOf(a.issued) === 'Today' ? '' : ' ' + dayOf(a.issued)}</small></div></div>`).join('')
+      : '<p>No storm alerts are active anywhere in South Africa right now. The alert service checks about every 30 minutes.</p>';
+  }
+  // browser notifications while the page is open
+  const NOTIFY_KEY = 'tw_notify';
+  const getNotify = () => { try { return localStorage.getItem(NOTIFY_KEY) || ''; } catch(e){ return ''; } };
+  function notifyNew(){
+    const slug = getNotify();
+    if (!slug || !('Notification' in window) || Notification.permission !== 'granted' || !ACTIVE) return;
+    const a = ACTIVE.find(x => x.slug === slug); if (!a) return;
+    const key = 'tw_notified_' + slug;
+    let last = 0; try { last = +localStorage.getItem(key) || 0; } catch(e){}
+    if (a.issued <= last) return;
+    try { localStorage.setItem(key, String(a.issued)); } catch(e){}
+    try { const n = new Notification(a.title, {body:a.body, tag:'thunderwatch-' + slug}); n.onclick = () => { window.focus(); location.hash = 'alerts'; }; } catch(e){}
+  }
+  function updateNotifyUI(){
+    const t = TOWNS[+$('townSel').value], slug = getNotify(), btn = $('notifyBtn'), st = $('notifyState');
+    if (!('Notification' in window)){ btn.hidden = true; st.textContent = 'This browser can’t show notifications. Use the ntfy app instead.'; return; }
+    if (Notification.permission === 'denied'){ btn.hidden = true; st.textContent = 'Notifications are blocked for this site. Allow them in your browser settings to use browser alerts.'; return; }
+    btn.hidden = false;
+    const on = !!t && slug === t.slug && Notification.permission === 'granted';
+    btn.textContent = on ? 'Turn off browser alerts' : `Turn on browser alerts for ${t ? t.name : 'this town'}`;
+    const cur = TOWNS.find(x => x.slug === slug);
+    st.textContent = slug && Notification.permission === 'granted' ? `Browser alerts are on for ${cur ? cur.name : slug} while Thunderwatch is open.` : '';
+  }
+  $('notifyBtn').onclick = async () => {
+    const t = TOWNS[+$('townSel').value]; if (!t) return;
+    if (getNotify() === t.slug && Notification.permission === 'granted'){ try { localStorage.removeItem(NOTIFY_KEY); } catch(e){} updateNotifyUI(); return; }
+    const p = await Notification.requestPermission();
+    if (p === 'granted'){ try { localStorage.setItem(NOTIFY_KEY, t.slug); } catch(e){} track('alerts-browser-on'); notifyNew(); }
+    updateNotifyUI();
+  };
+  setInterval(() => { if (!document.hidden || getNotify()) loadActive(); }, 5*60e3);
 
   // ---------- phone layout ----------
   const isPhone = () => matchMedia('(max-width:899px)').matches;
@@ -1326,6 +1402,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
   $('place').textContent = state.center.name;
   renderSaved(); updateSaveBtn();
   focusMap(state.center.lat, state.center.lon, 8);
+  loadActive();
   loadForecast();
 })();
 </script>
