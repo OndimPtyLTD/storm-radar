@@ -35,7 +35,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.45 var(--body);overfl
 button,input{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
-.top{position:fixed;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;max-width:420px}
+.top{position:fixed;z-index:1100;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;max-width:420px}
 .search{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:0 6px 20px rgba(10,20,35,.18)}
 .search input{flex:1;min-width:0;border:0;background:transparent;padding:8px 10px;outline:none}
 .search input:focus-visible{outline:none}
@@ -46,6 +46,9 @@ button,input{font:inherit;color:inherit}
 #results button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:9px 10px;border-radius:8px;cursor:pointer}
 #results button:hover,#results button:focus-visible{background:var(--bg)}
 #results small{color:var(--muted)}
+#results{max-height:50vh;overflow:auto}
+#results button[aria-selected="true"]{background:var(--bg)}
+#results li.note{padding:9px 10px;color:var(--muted)}
 
 .panel{position:fixed;z-index:1000;left:0;right:0;bottom:0;max-height:56vh;overflow:auto;background:var(--surface);
   border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 14px);
@@ -779,32 +782,50 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     div.querySelector('button').onclick = () => { map.closePopup(pop); moveTo(+lat.toFixed(3), +lng.toFixed(3), `${Math.abs(lat).toFixed(2)}°${lat<0?'S':'N'}, ${Math.abs(lng).toFixed(2)}°${lng<0?'W':'E'}`); };
   });
 
-  let searchT, lastResults = [];
+  let searchT, lastResults = [], active = -1, reqId = 0;
+  const note = t => `<li class="note">${t}</li>`;
+  function showResults(){
+    const ul = $('results');
+    ul.innerHTML = lastResults.map((p,i) => `<li><button type="button" data-i="${i}" role="option" aria-selected="${i === active}">${p.name} <small>${[p.admin1, p.country].filter(Boolean).join(', ')}</small></button></li>`).join('') || note('No places match that name. Try a nearby town.');
+    ul.hidden = false;
+    ul.querySelectorAll('button').forEach(b => b.onclick = () => pick(+b.dataset.i));
+  }
   async function search(q){
-    if (q.trim().length < 2){ $('results').hidden = true; return; }
+    const id = ++reqId;
+    if (q.trim().length < 2){ $('results').hidden = true; lastResults = []; active = -1; return; }
+    if (!lastResults.length){ $('results').innerHTML = note('Searching…'); $('results').hidden = false; }
     try{
-      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en`);
-      const j = await r.json(); lastResults = j.results || [];
-      const ul = $('results');
-      ul.innerHTML = lastResults.length
-        ? lastResults.map((p,i) => `<li><button data-i="${i}">${p.name} <small>${[p.admin1, p.country].filter(Boolean).join(', ')}</small></button></li>`).join('')
-        : '<li style="padding:9px 10px;color:var(--muted)">No places match that name. Try a nearby town.</li>';
-      ul.hidden = false;
-      ul.querySelectorAll('button').forEach(b => b.onclick = () => pick(+b.dataset.i));
+      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=10&language=en`);
+      const j = await r.json();
+      if (id !== reqId) return;   // a newer keystroke has taken over
+      lastResults = (j.results || []).sort((a,b) => (b.country_code === 'ZA') - (a.country_code === 'ZA')).slice(0, 8);
+      active = lastResults.length ? 0 : -1;
+      showResults();
     } catch(e){
-      const ul = $('results');
-      ul.innerHTML = '<li style="padding:9px 10px;color:var(--muted)">Place search didn’t respond. Check your connection and try again.</li>';
-      ul.hidden = false;
+      if (id !== reqId) return;
+      $('results').innerHTML = note('Place search didn’t respond. Check your connection and try again.');
+      $('results').hidden = false;
     }
   }
   function pick(i){
     const p = lastResults[i]; if (!p) return;
+    lastResults = []; active = -1;
     $('results').hidden = true; $('q').value = ''; $('q').blur();
     moveTo(p.latitude, p.longitude, p.name);
   }
-  $('q').oninput = e => { clearTimeout(searchT); searchT = setTimeout(() => search(e.target.value), 320); };
-  $('searchForm').onsubmit = async e => { e.preventDefault(); await search($('q').value); pick(0); };
+  $('q').oninput = e => { clearTimeout(searchT); searchT = setTimeout(() => search(e.target.value), 180); };
+  $('q').onkeydown = e => {
+    if ($('results').hidden || !lastResults.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      active = (active + (e.key === 'ArrowDown' ? 1 : -1) + lastResults.length) % lastResults.length;
+      showResults();
+    }
+  };
+  $('q').onfocus = () => { if (lastResults.length) $('results').hidden = false; };
+  $('searchForm').onsubmit = async e => { e.preventDefault(); clearTimeout(searchT); if (!lastResults.length) await search($('q').value); pick(Math.max(active, 0)); };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') $('results').hidden = true; });
+  document.addEventListener('click', e => { if (!e.target.closest('.top')) $('results').hidden = true; });
 
   loadForecast();
 })();
