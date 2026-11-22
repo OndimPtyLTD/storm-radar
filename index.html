@@ -1096,6 +1096,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
       await loadNational();
       if (state.mode !== 'national') return;
       nationalSummary(); renderNational();
+      if (isPhone()) map.fitBounds(SA_BOUNDS, {paddingTopLeft:[0, topCover()], paddingBottomRight:[0, panelCover()]});   // panel height changed
     } catch(e){
       if (state.mode !== 'national') return;
       $('natList').innerHTML = `<li>${e.message === 'rate' ? 'Open-Meteo’s free limit was reached. Wait a minute, then try again.' : 'The South Africa forecast couldn’t be loaded, so no storm information can be shown. This does not mean there are no storms. Try again shortly.'}</li>`;
