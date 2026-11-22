@@ -1042,6 +1042,7 @@ tr.day td{font-weight:600;color:var(--muted);background:var(--bg);cursor:default
     $('layers').hidden = mode === 'radar';
     $('srcrow').hidden = mode !== 'forecast';
     $('radarBits').hidden = mode !== 'radar';
+    ['move','approach','peak'].forEach(id => $(id).hidden = mode === 'national');   // those lines describe My area only
     const sl = $('slider');
     if (mode === 'radar'){
       cellLayer.remove(); arrowLayer.remove();
