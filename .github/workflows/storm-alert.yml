@@ -2,11 +2,11 @@ name: Storm alert
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # every 15 minutes (GitHub may run a few minutes late)
+    - cron: "*/30 * * * *"   # every 30 minutes (GitHub may run a few minutes late)
   workflow_dispatch:
     inputs:
       test:
-        description: "Send a test ping"
+        description: "Send a test ping to the owner's private topic"
         type: boolean
         default: false
 
@@ -20,18 +20,16 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Check for storms
+      - name: Check for storms across South Africa
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          LAT: "-29.87"
-          LON: "30.89"
-          PLACE: "Queensburgh"
+          OWNER_TOWN: "durban"
           APP_URL: "https://ondimptyltd.github.io/storm-radar/"
           TEST: ${{ inputs.test || 'false' }}
         run: python storm_alert.py
