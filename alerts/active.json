@@ -1,17 +1,4 @@
 {
- "updated": 1795379600,
- "alerts": [
-  {
-   "slug": "richards-bay",
-   "name": "Richards Bay",
-   "province": "KwaZulu-Natal",
-   "lat": -28.78,
-   "lon": 32.04,
-   "level": "Extreme",
-   "title": "Richards Bay: Extreme thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Richards Bay from about 22:33 (forecast estimate). Hail possible. If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795378016,
-   "until": 1795388400
-  }
- ]
+ "updated": 1795397318,
+ "alerts": []
 }
