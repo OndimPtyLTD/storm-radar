@@ -1,30 +1,6 @@
 {
- "updated": 1795426649,
+ "updated": 1795471057,
  "alerts": [
-  {
-   "slug": "johannesburg",
-   "name": "Johannesburg",
-   "province": "Gauteng",
-   "lat": -26.2,
-   "lon": 28.05,
-   "level": "Very high",
-   "title": "Johannesburg: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Johannesburg from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795430249
-  },
-  {
-   "slug": "pretoria",
-   "name": "Pretoria",
-   "province": "Gauteng",
-   "lat": -25.75,
-   "lon": 28.19,
-   "level": "Very high",
-   "title": "Pretoria: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Pretoria from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795430249
-  },
   {
    "slug": "vereeniging",
    "name": "Vereeniging",
@@ -33,33 +9,21 @@
    "lon": 27.93,
    "level": "Very high",
    "title": "Vereeniging: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Vereeniging from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
+   "body": "Very high thunderstorm risk over Vereeniging from about 23:57 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795471057,
+   "until": 1795474800
   },
   {
-   "slug": "newcastle",
-   "name": "Newcastle",
-   "province": "KwaZulu-Natal",
-   "lat": -27.76,
-   "lon": 29.93,
-   "level": "Very high",
-   "title": "Newcastle: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Newcastle from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
-  },
-  {
-   "slug": "mthatha",
-   "name": "Mthatha",
+   "slug": "east-london",
+   "name": "East London",
    "province": "Eastern Cape",
-   "lat": -31.59,
-   "lon": 28.78,
+   "lat": -33.02,
+   "lon": 27.91,
    "level": "Very high",
-   "title": "Mthatha: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Mthatha from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
+   "title": "East London: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over East London from about 23:57 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795471057,
+   "until": 1795474657
   },
   {
    "slug": "komani",
@@ -67,23 +31,11 @@
    "province": "Eastern Cape",
    "lat": -31.9,
    "lon": 26.88,
-   "level": "Extreme",
-   "title": "Komani: Extreme thunderstorm risk within 2 hours",
-   "body": "Extreme thunderstorm risk over Komani from about 13:00 (forecast estimate). Hail possible. If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
-  },
-  {
-   "slug": "bloemfontein",
-   "name": "Bloemfontein",
-   "province": "Free State",
-   "lat": -29.12,
-   "lon": 26.21,
-   "level": "Extreme",
-   "title": "Bloemfontein: Extreme thunderstorm risk within 2 hours",
-   "body": "Extreme thunderstorm risk over Bloemfontein from about 12:00 (forecast estimate). Hail possible. If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
+   "level": "Very high",
+   "title": "Komani: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Komani from about 01:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795471057,
+   "until": 1795478400
   },
   {
    "slug": "welkom",
@@ -93,9 +45,9 @@
    "lon": 26.73,
    "level": "Very high",
    "title": "Welkom: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Welkom from about 12:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
+   "body": "Very high thunderstorm risk over Welkom from about 23:57 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795471057,
+   "until": 1795474657
   },
   {
    "slug": "bethlehem",
@@ -105,45 +57,9 @@
    "lon": 28.31,
    "level": "Very high",
    "title": "Bethlehem: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Bethlehem from about 12:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
-  },
-  {
-   "slug": "kimberley",
-   "name": "Kimberley",
-   "province": "Northern Cape",
-   "lat": -28.74,
-   "lon": 24.76,
-   "level": "Extreme",
-   "title": "Kimberley: Extreme thunderstorm risk within 2 hours",
-   "body": "Extreme thunderstorm risk over Kimberley from about 12:00 (forecast estimate). Hail possible. If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
-  },
-  {
-   "slug": "lephalale",
-   "name": "Lephalale",
-   "province": "Limpopo",
-   "lat": -23.68,
-   "lon": 27.7,
-   "level": "Very high",
-   "title": "Lephalale: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Lephalale from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795430249
-  },
-  {
-   "slug": "emalahleni",
-   "name": "Emalahleni",
-   "province": "Mpumalanga",
-   "lat": -25.87,
-   "lon": 29.23,
-   "level": "Very high",
-   "title": "Emalahleni: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Emalahleni from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795430249
+   "body": "Very high thunderstorm risk over Bethlehem from about 23:57 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795471057,
+   "until": 1795481375
   },
   {
    "slug": "ermelo",
@@ -153,45 +69,9 @@
    "lon": 29.98,
    "level": "Very high",
    "title": "Ermelo: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Ermelo from about 12:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
-  },
-  {
-   "slug": "rustenburg",
-   "name": "Rustenburg",
-   "province": "North West",
-   "lat": -25.67,
-   "lon": 27.24,
-   "level": "Very high",
-   "title": "Rustenburg: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Rustenburg from about 11:37 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
-  },
-  {
-   "slug": "mahikeng",
-   "name": "Mahikeng",
-   "province": "North West",
-   "lat": -25.85,
-   "lon": 25.64,
-   "level": "Very high",
-   "title": "Mahikeng: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Mahikeng from about 13:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
-  },
-  {
-   "slug": "klerksdorp",
-   "name": "Klerksdorp",
-   "province": "North West",
-   "lat": -26.85,
-   "lon": 26.67,
-   "level": "Very high",
-   "title": "Klerksdorp: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Klerksdorp from about 12:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795426649,
-   "until": 1795435200
+   "body": "Very high thunderstorm risk over Ermelo from about 23:57 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795471057,
+   "until": 1795474800
   }
  ]
 }
