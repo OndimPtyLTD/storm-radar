@@ -1,4 +1,17 @@
 {
- "updated": 1795499345,
- "alerts": []
+ "updated": 1795540795,
+ "alerts": [
+  {
+   "slug": "mbombela",
+   "name": "Mbombela",
+   "province": "Mpumalanga",
+   "lat": -25.47,
+   "lon": 30.97,
+   "level": "Very high",
+   "title": "Mbombela: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Mbombela from about 20:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795540795,
+   "until": 1795546800
+  }
+ ]
 }
