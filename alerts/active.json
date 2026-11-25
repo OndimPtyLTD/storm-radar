@@ -1,6 +1,54 @@
 {
- "updated": 1795570306,
+ "updated": 1795601892,
  "alerts": [
+  {
+   "slug": "johannesburg",
+   "name": "Johannesburg",
+   "province": "Gauteng",
+   "lat": -26.2,
+   "lon": 28.05,
+   "level": "Very high",
+   "title": "Johannesburg: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Johannesburg from about 13:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795601892,
+   "until": 1795611600
+  },
+  {
+   "slug": "pretoria",
+   "name": "Pretoria",
+   "province": "Gauteng",
+   "lat": -25.75,
+   "lon": 28.19,
+   "level": "Very high",
+   "title": "Pretoria: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Pretoria from about 13:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795601892,
+   "until": 1795611600
+  },
+  {
+   "slug": "newcastle",
+   "name": "Newcastle",
+   "province": "KwaZulu-Natal",
+   "lat": -27.76,
+   "lon": 29.93,
+   "level": "Very high",
+   "title": "Newcastle: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Newcastle from about 14:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795601892,
+   "until": 1795611600
+  },
+  {
+   "slug": "emalahleni",
+   "name": "Emalahleni",
+   "province": "Mpumalanga",
+   "lat": -25.87,
+   "lon": 29.23,
+   "level": "Very high",
+   "title": "Emalahleni: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Emalahleni from about 13:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795601892,
+   "until": 1795611600
+  },
   {
    "slug": "ermelo",
    "name": "Ermelo",
@@ -9,9 +57,21 @@
    "lon": 29.98,
    "level": "Very high",
    "title": "Ermelo: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Ermelo from about 03:31 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795570306,
-   "until": 1795575600
+   "body": "Very high thunderstorm risk over Ermelo from about 13:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795601892,
+   "until": 1795608000
+  },
+  {
+   "slug": "rustenburg",
+   "name": "Rustenburg",
+   "province": "North West",
+   "lat": -25.67,
+   "lon": 27.24,
+   "level": "Very high",
+   "title": "Rustenburg: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Rustenburg from about 13:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795601892,
+   "until": 1795608000
   }
  ]
 }
