@@ -1,17 +1,17 @@
 {
- "updated": 1795540795,
+ "updated": 1795570306,
  "alerts": [
   {
-   "slug": "mbombela",
-   "name": "Mbombela",
+   "slug": "ermelo",
+   "name": "Ermelo",
    "province": "Mpumalanga",
-   "lat": -25.47,
-   "lon": 30.97,
+   "lat": -26.53,
+   "lon": 29.98,
    "level": "Very high",
-   "title": "Mbombela: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Mbombela from about 20:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795540795,
-   "until": 1795546800
+   "title": "Ermelo: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Ermelo from about 03:31 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795570306,
+   "until": 1795575600
   }
  ]
 }
