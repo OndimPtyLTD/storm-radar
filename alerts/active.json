@@ -1,4 +1,29 @@
 {
- "updated": 1795637084,
- "alerts": []
+ "updated": 1795786734,
+ "alerts": [
+  {
+   "slug": "komani",
+   "name": "Komani",
+   "province": "Eastern Cape",
+   "lat": -31.9,
+   "lon": 26.88,
+   "level": "Very high",
+   "title": "Komani: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Komani from about 15:38 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795786734,
+   "until": 1795791600
+  },
+  {
+   "slug": "de-aar",
+   "name": "De Aar",
+   "province": "Northern Cape",
+   "lat": -30.65,
+   "lon": 24.01,
+   "level": "Very high",
+   "title": "De Aar: Very high thunderstorm risk within 2 hours",
+   "body": "Forecast: very high thunderstorm risk area about 87 km NW of De Aar, drifting your way at 46 km/h, could arrive around 17:32 (model estimate, not a tracked storm). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795786734,
+   "until": 1795797160
+  }
+ ]
 }
