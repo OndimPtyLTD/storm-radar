@@ -1,29 +1,41 @@
 {
- "updated": 1795818925,
+ "updated": 1795839032,
  "alerts": [
   {
-   "slug": "rustenburg",
-   "name": "Rustenburg",
-   "province": "North West",
-   "lat": -25.67,
-   "lon": 27.24,
+   "slug": "east-london",
+   "name": "East London",
+   "province": "Eastern Cape",
+   "lat": -33.02,
+   "lon": 27.91,
    "level": "Very high",
-   "title": "Rustenburg: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Rustenburg from about 02:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795818925,
-   "until": 1795827600
+   "title": "East London: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over East London from about 07:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795839032,
+   "until": 1795845600
   },
   {
-   "slug": "vryburg",
-   "name": "Vryburg",
-   "province": "North West",
-   "lat": -26.96,
-   "lon": 24.73,
+   "slug": "emalahleni",
+   "name": "Emalahleni",
+   "province": "Mpumalanga",
+   "lat": -25.87,
+   "lon": 29.23,
    "level": "Very high",
-   "title": "Vryburg: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Vryburg from about 02:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795818925,
-   "until": 1795827600
+   "title": "Emalahleni: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Emalahleni from about 06:10 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795839032,
+   "until": 1795849200
+  },
+  {
+   "slug": "ermelo",
+   "name": "Ermelo",
+   "province": "Mpumalanga",
+   "lat": -26.53,
+   "lon": 29.98,
+   "level": "Very high",
+   "title": "Ermelo: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Ermelo from about 06:10 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795839032,
+   "until": 1795849200
   }
  ]
 }
