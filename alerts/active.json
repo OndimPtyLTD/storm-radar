@@ -1,17 +1,53 @@
 {
- "updated": 1795839032,
+ "updated": 1795872530,
  "alerts": [
   {
-   "slug": "east-london",
-   "name": "East London",
-   "province": "Eastern Cape",
-   "lat": -33.02,
-   "lon": 27.91,
+   "slug": "durban",
+   "name": "Durban",
+   "province": "KwaZulu-Natal",
+   "lat": -29.86,
+   "lon": 31.03,
    "level": "Very high",
-   "title": "East London: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over East London from about 07:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795839032,
-   "until": 1795845600
+   "title": "Durban: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Durban from about 15:28 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795872530,
+   "until": 1795876130
+  },
+  {
+   "slug": "pietermaritzburg",
+   "name": "Pietermaritzburg",
+   "province": "KwaZulu-Natal",
+   "lat": -29.6,
+   "lon": 30.38,
+   "level": "Very high",
+   "title": "Pietermaritzburg: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Pietermaritzburg from about 15:28 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795872530,
+   "until": 1795881600
+  },
+  {
+   "slug": "port-shepstone",
+   "name": "Port Shepstone",
+   "province": "KwaZulu-Natal",
+   "lat": -30.74,
+   "lon": 30.45,
+   "level": "Very high",
+   "title": "Port Shepstone: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Port Shepstone from about 17:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795872530,
+   "until": 1795881600
+  },
+  {
+   "slug": "mthatha",
+   "name": "Mthatha",
+   "province": "Eastern Cape",
+   "lat": -31.59,
+   "lon": 28.78,
+   "level": "Very high",
+   "title": "Mthatha: Very high thunderstorm risk within 2 hours",
+   "body": "Very high thunderstorm risk over Mthatha from about 16:00 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795872530,
+   "until": 1795878000
   },
   {
    "slug": "emalahleni",
@@ -21,9 +57,9 @@
    "lon": 29.23,
    "level": "Very high",
    "title": "Emalahleni: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Emalahleni from about 06:10 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795839032,
-   "until": 1795849200
+   "body": "Very high thunderstorm risk over Emalahleni from about 15:28 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795872530,
+   "until": 1795876130
   },
   {
    "slug": "ermelo",
@@ -33,9 +69,9 @@
    "lon": 29.98,
    "level": "Very high",
    "title": "Ermelo: Very high thunderstorm risk within 2 hours",
-   "body": "Very high thunderstorm risk over Ermelo from about 06:10 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
-   "issued": 1795839032,
-   "until": 1795849200
+   "body": "Very high thunderstorm risk over Ermelo from about 15:28 (forecast estimate). If you hear thunder, go indoors and stay away from floodwater. Follow SA Weather Service warnings.",
+   "issued": 1795872530,
+   "until": 1795876130
   }
  ]
 }
